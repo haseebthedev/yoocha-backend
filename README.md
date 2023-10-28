@@ -48,6 +48,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 Nest is [MIT licensed](LICENSE).
 
+```
 project-root/
   ├── src/
   │    ├── main.ts                # Entry point of the application
@@ -79,3 +80,4 @@ project-root/
   ├── package.json
   ├── tsconfig.json
   ├── README.md
+```
