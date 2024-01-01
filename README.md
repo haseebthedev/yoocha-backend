@@ -1,6 +1,6 @@
 ## Description
 
-This repo contains code of rocco-chat-server. This is a homeserver and can be hosted locally. 
+This repo contains code of yoocha-backend. This is a homeserver and can be hosted locally. 
 
 ## Installation
 
