@@ -1,11 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { SignInDTO, SignUpDTO } from './dto';
+import { ForgotPassDTO, ResetPassDTO, SignInDTO, SignUpDTO } from './dto';
 import * as argon from 'argon2';
-import { InjectModel } from '@nestjs/mongoose';
 import { User } from '../user/schemas/user.schema';
-import { Model } from 'mongoose';
 import { UserService } from '../user/user.service';
 
 @Injectable()
@@ -16,30 +14,10 @@ export class AuthService {
     private userService: UserService,
   ) {}
 
-  async signin(dto: SignInDTO): Promise<any> {
-    let user = await this.userService.findByEmail(dto.email);
-
-    let isPasswordMatch = await argon.verify(user.password, dto.password);
-
-    if (!isPasswordMatch) {
-      throw new UnauthorizedException('Either email or password is invalid');
-    }
-
-    user.password = undefined;
-    return user;
-  }
-
-  async signup(dto: SignUpDTO): Promise<any> {
-    const hash = await argon.hash(dto.password);
-    dto.password = hash;
-
-    const user = await this.userService.create(dto);
-    user.password = undefined;
-
-    return user;
-  }
-
-  async signToken(userId: string, email: string) {
+  async signToken(
+    userId: string,
+    email: string,
+  ): Promise<{ access_token: string }> {
     const payload = { sub: userId, email };
     const jwtSecret = this.config.get('JWT_SECRET');
 
@@ -48,8 +26,38 @@ export class AuthService {
       secret: jwtSecret,
     });
 
-    return {
-      access_token: token,
-    };
+    return { access_token: token };
+  }
+
+  async signin(dto: SignInDTO): Promise<User> {
+    let user = await this.userService.findByEmail(dto.email);
+
+    let isPassMatch = await argon.verify(user.password, dto.password);
+    if (!isPassMatch) {
+      throw new UnauthorizedException('Either email or password is invalid');
+    }
+    user.password = undefined;
+    return user;
+  }
+
+  async signup(dto: SignUpDTO): Promise<User> {
+    const hash = await argon.hash(dto.password);
+    dto.password = hash;
+
+    const user = await this.userService.create(dto);
+    user.password = undefined;
+    return user;
+  }
+
+  async forgotPassword(dto: ForgotPassDTO): Promise<{ result: string }> {
+    return await this.userService.forgotPassword(dto.email);
+  }
+
+  async resetPassword(dto: ResetPassDTO): Promise<{ result: string }> {
+    return await this.userService.resetPassword(
+      dto.email,
+      dto.authCode,
+      dto.newPassword,
+    );
   }
 }

@@ -27,3 +27,19 @@ export class SignUpDTO {
   @IsNotEmpty()
   password: string;
 }
+
+export class ForgotPassDTO {
+  @IsString()
+  email: string;
+}
+
+export class ResetPassDTO {
+  @IsString()
+  email: string;
+
+  @IsString()
+  authCode: string;
+
+  @IsString()
+  newPassword: string;
+}

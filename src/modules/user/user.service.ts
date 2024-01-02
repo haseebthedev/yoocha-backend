@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -10,6 +11,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
 import { SignUpDTO } from '../auth/dto';
+import { generateRandomDigits } from 'src/common/utils/common';
 
 @Injectable()
 export class UserService {
@@ -49,5 +51,44 @@ export class UserService {
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
+  }
+
+  async forgotPassword(email: string): Promise<{ result: string }> {
+    const userInDB = await this.userModel.findOne({ email: email });
+
+    if (!userInDB) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    let OTPCode = generateRandomDigits(6);
+    userInDB.authCode = OTPCode.toString();
+    await userInDB.save();
+
+    return {
+      result: 'Please check your email.',
+    };
+  }
+
+  async resetPassword(
+    email: string,
+    authCode: string,
+    newPassword: string,
+  ): Promise<{ result: string }> {
+    const user = await this.userModel.findOne({ email: email });
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    if (user.authCode !== authCode) {
+      throw new BadRequestException(`You have entered an invalid authcode`);
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return {
+      result: 'Your account password has been reset. Try login again.',
+    };
   }
 }
