@@ -21,31 +21,39 @@
 //   }
 // }
 
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { User, UserDocument } from 'src/modules/user/schemas/user.schema';
+import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    private userService: UserService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: config.get('JWT_SECRET'),
     });
   }
 
-  async validate(payload: { sub: number; email: string }) {
-    // const user = await this.prismaService.user.findUnique({
-    //   where: {
-    //     id: payload.sub,
-    //     email: payload.email,
-    //   },
-    // });
+  async validate(payload: { sub: string; email: string }): Promise<User> {
+    const user = await this.userService.findById(payload.sub);
 
-    // delete user.hash;
-    // return user;
+    if (!user) {
+      throw new UnauthorizedException('Invalid token provided');
+    }
 
-    return payload;
+    user.authCode = undefined;
+    user.password = undefined;
+
+    return user;
   }
 }

@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import * as argon from 'argon2';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { HydratedDocument } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
+import * as bcrypt from 'bcrypt';
 
 @Schema()
 export class User extends BaseSchema {
@@ -19,6 +19,8 @@ export class User extends BaseSchema {
   email: string;
 
   @Prop()
+  @IsString()
+  @IsNotEmpty()
   password: string;
 
   @Prop({ default: null })
@@ -36,8 +38,8 @@ UserSchema.pre('save', async function (next) {
 
   // If password is changed or this is a new user, generate hash
   if (user.isModified('password') || user.isNew) {
-    const hashedPassword = await argon.hash(user.password);
-    user.password = hashedPassword;
+    const hash = await bcrypt.hash(user.password, 10);
+    user.password = hash;
   }
   next();
 });
