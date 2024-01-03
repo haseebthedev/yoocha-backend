@@ -11,7 +11,7 @@ import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
 import { SignUpDTO } from '../auth/dto';
 import { generateRandomDigits } from 'src/common/utils/common';
-import { ChangePassDTO } from './dto';
+import { ChangePassDTO, UpdateProfileDTO } from './dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -40,7 +40,18 @@ export class UserService {
 
   async findById(userId: string): Promise<User | null> {
     try {
-      return this.userModel.findById(userId).exec();
+      return await this.userModel.findById(userId).exec();
+    } catch (error) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+  }
+
+  async findByIdandUpdate(
+    userId: string,
+    dto: UpdateProfileDTO,
+  ): Promise<User> {
+    try {
+      return await this.userModel.findByIdAndUpdate(userId, dto).exec();
     } catch (error) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
@@ -48,7 +59,7 @@ export class UserService {
 
   async findAll(): Promise<User[]> {
     try {
-      return this.userModel.find().exec();
+      return await this.userModel.find().exec();
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
