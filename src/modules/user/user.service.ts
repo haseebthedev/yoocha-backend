@@ -4,7 +4,6 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
@@ -12,6 +11,8 @@ import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
 import { SignUpDTO } from '../auth/dto';
 import { generateRandomDigits } from 'src/common/utils/common';
+import { ChangePassDTO } from './dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -90,5 +91,22 @@ export class UserService {
     return {
       result: 'Your account password has been reset. Try login again.',
     };
+  }
+
+  async changePassword(userId: string, dto: ChangePassDTO) {
+    const user = await this.userModel.findById(userId);
+
+    const isPassMatch = await bcrypt.compare(dto.oldPassword, user.password);
+
+    if (!isPassMatch) {
+      throw new BadRequestException('Your current password is not correct.');
+    }
+    user.password = dto.newPassword;
+    await user.save();
+
+    user.password = undefined;
+    user.authCode = undefined;
+
+    return { result: 'Your password has been changed successfully.' };
   }
 }

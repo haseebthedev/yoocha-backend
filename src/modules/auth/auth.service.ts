@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { ForgotPassDTO, ResetPassDTO, SignInDTO, SignUpDTO } from './dto';
 import { User } from '../user/schemas/user.schema';
 import { UserService } from '../user/user.service';
+import { ForgotPassDTO, ResetPassDTO, SignInDTO, SignUpDTO } from './dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -29,8 +29,8 @@ export class AuthService {
     return { access_token: token };
   }
 
-  async signin(dto: SignInDTO): Promise<User> {
-    let user = await this.userService.findByEmail(dto.email);
+  async signin(dto: SignInDTO): Promise<{ user: User; token: string }> {
+    const user = await this.userService.findByEmail(dto.email);
 
     const isMatch = await bcrypt.compare(dto.password, user.password);
     if (!isMatch) {
@@ -38,7 +38,10 @@ export class AuthService {
     }
     user.password = undefined;
     user.authCode = undefined;
-    return user;
+
+    const token = await this.signToken(user._id, user.email);
+
+    return { user, token: token.access_token };
   }
 
   async signup(dto: SignUpDTO): Promise<User> {
