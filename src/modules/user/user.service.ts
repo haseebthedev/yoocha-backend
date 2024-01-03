@@ -22,27 +22,43 @@ export class UserService {
   ) {}
 
   async create(dto: SignUpDTO): Promise<User> {
-    const userInDB = await this.userModel.findOne({ email: dto.email });
-    if (userInDB) {
-      throw new ConflictException('User already exists with this email');
-    }
+    try {
+      const userInDB = await this.userModel.findOne({ email: dto.email });
+      if (userInDB) {
+        throw new ConflictException('User already exists with this email');
+      }
 
-    const user = new this.userModel(dto);
-    return user.save();
+      const user = new this.userModel(dto);
+      return user.save();
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    let user = await this.userModel.findOne({ email }).exec();
+    try {
+      let user = await this.userModel.findOne({ email }).exec();
 
-    if (user) return user;
-    else throw new NotFoundException(`User with email ${email} not found`);
+      if (user) return user;
+      else throw new NotFoundException(`User with email ${email} not found`);
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   async findById(userId: string): Promise<User | null> {
     try {
-      return await this.userModel.findById(userId).exec();
+      let user = await this.userModel.findById(userId).exec();
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      user.authCode = undefined;
+      user.password = undefined;
+      return user;
     } catch (error) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -51,9 +67,17 @@ export class UserService {
     dto: UpdateProfileDTO,
   ): Promise<User> {
     try {
-      return await this.userModel.findByIdAndUpdate(userId, dto).exec();
+      let user = await this.userModel.findByIdAndUpdate(userId, dto).exec();
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      user.authCode = undefined;
+      user.password = undefined;
+      return user;
     } catch (error) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -66,19 +90,23 @@ export class UserService {
   }
 
   async forgotPassword(email: string): Promise<{ result: string }> {
-    const userInDB = await this.userModel.findOne({ email: email });
+    try {
+      const userInDB = await this.userModel.findOne({ email: email });
 
-    if (!userInDB) {
-      throw new NotFoundException(`User with email ${email} not found`);
+      if (!userInDB) {
+        throw new NotFoundException(`User with email ${email} not found`);
+      }
+
+      let OTPCode = generateRandomDigits(6);
+      userInDB.authCode = OTPCode.toString();
+      await userInDB.save();
+
+      return {
+        result: 'Please check your email.',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
     }
-
-    let OTPCode = generateRandomDigits(6);
-    userInDB.authCode = OTPCode.toString();
-    await userInDB.save();
-
-    return {
-      result: 'Please check your email.',
-    };
   }
 
   async resetPassword(
@@ -86,38 +114,41 @@ export class UserService {
     authCode: string,
     newPassword: string,
   ): Promise<{ result: string }> {
-    const user = await this.userModel.findOne({ email: email });
+    try {
+      const user = await this.userModel.findOne({ email: email });
+      if (!user) {
+        throw new NotFoundException(`User with email ${email} not found`);
+      }
+      if (user.authCode !== authCode) {
+        throw new BadRequestException(`You have entered an invalid authcode`);
+      }
+      user.password = newPassword;
+      await user.save();
 
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
+      return {
+        result: 'Your account password has been reset.',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
     }
-
-    if (user.authCode !== authCode) {
-      throw new BadRequestException(`You have entered an invalid authcode`);
-    }
-
-    user.password = newPassword;
-    await user.save();
-
-    return {
-      result: 'Your account password has been reset. Try login again.',
-    };
   }
 
   async changePassword(userId: string, dto: ChangePassDTO) {
-    const user = await this.userModel.findById(userId);
+    try {
+      const user = await this.userModel.findById(userId);
+      const isPassMatch = await bcrypt.compare(dto.oldPassword, user.password);
+      if (!isPassMatch) {
+        throw new BadRequestException('Your current password is not correct.');
+      }
+      user.password = dto.newPassword;
+      await user.save();
 
-    const isPassMatch = await bcrypt.compare(dto.oldPassword, user.password);
+      user.password = undefined;
+      user.authCode = undefined;
 
-    if (!isPassMatch) {
-      throw new BadRequestException('Your current password is not correct.');
+      return { result: 'Your password has been changed successfully.' };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
     }
-    user.password = dto.newPassword;
-    await user.save();
-
-    user.password = undefined;
-    user.authCode = undefined;
-
-    return { result: 'Your password has been changed successfully.' };
   }
 }

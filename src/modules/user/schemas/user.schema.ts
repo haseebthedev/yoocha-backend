@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, isBoolean } from 'class-validator';
 import { HydratedDocument } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
 import * as bcrypt from 'bcrypt';
@@ -14,9 +14,12 @@ export class User extends BaseSchema {
   @IsNotEmpty()
   lastname: string;
 
-  @Prop({ unique: true })
+  @Prop({ unique: true, lowercase: true })
   @IsNotEmpty()
   email: string;
+
+  @Prop({ default: false })
+  isEmailVerified: boolean;
 
   @Prop()
   @IsString()
