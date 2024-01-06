@@ -8,7 +8,6 @@ export class AuthController {
 
   @Post('signin')
   signin(@Body() dto: SignInDTO) {
-    console.log('dto === ', dto);
     return this.authService.signin(dto);
   }
 

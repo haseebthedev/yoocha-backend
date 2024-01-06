@@ -7,6 +7,10 @@ import * as bcrypt from 'bcrypt';
 @Schema()
 export class User extends BaseSchema {
   @Prop({ default: null })
+  @IsString()
+  profilePicture: string;
+
+  @Prop({ default: null })
   @IsNotEmpty()
   firstname: string;
 
@@ -36,10 +40,9 @@ export const UserSchema = SchemaFactory.createForClass(User).set(
   false,
 );
 
+// If password is changed or this is a new user, generate hash
 UserSchema.pre('save', async function (next) {
   const user = this as UserDocument;
-
-  // If password is changed or this is a new user, generate hash
   if (user.isModified('password') || user.isNew) {
     const hash = await bcrypt.hash(user.password, 10);
     user.password = hash;

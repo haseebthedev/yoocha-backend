@@ -92,11 +92,9 @@ export class UserService {
   async forgotPassword(email: string): Promise<{ result: string }> {
     try {
       const userInDB = await this.userModel.findOne({ email: email });
-
       if (!userInDB) {
         throw new NotFoundException(`User with email ${email} not found`);
       }
-
       let OTPCode = generateRandomDigits(6);
       userInDB.authCode = OTPCode.toString();
       await userInDB.save();
