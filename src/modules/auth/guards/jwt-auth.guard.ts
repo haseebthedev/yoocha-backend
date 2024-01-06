@@ -7,3 +7,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
 }
+
+@Injectable()
+export class WSJwtAuthGuard extends AuthGuard('ws-jwt') {
+  constructor() {
+    super();
+  }
+}
