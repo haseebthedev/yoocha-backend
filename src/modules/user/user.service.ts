@@ -5,7 +5,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
@@ -16,10 +15,7 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async create(dto: SignUpDTO): Promise<User> {
     try {
@@ -37,7 +33,7 @@ export class UserService {
 
   async findByEmail(email: string): Promise<User | null> {
     try {
-      let user = await this.userModel.findOne({ email }).exec();
+      const user = await this.userModel.findOne({ email }).exec();
 
       if (user) return user;
       else throw new NotFoundException(`User with email ${email} not found`);
@@ -48,7 +44,7 @@ export class UserService {
 
   async findById(userId: string): Promise<User | null> {
     try {
-      let user = await this.userModel.findById(userId).exec();
+      const user = await this.userModel.findById(userId).exec();
 
       if (!user) {
         throw new NotFoundException(`User with ID ${userId} not found`);
@@ -67,7 +63,7 @@ export class UserService {
     dto: UpdateProfileDTO,
   ): Promise<User> {
     try {
-      let user = await this.userModel.findByIdAndUpdate(userId, dto).exec();
+      const user = await this.userModel.findByIdAndUpdate(userId, dto).exec();
 
       if (!user) {
         throw new NotFoundException(`User with ID ${userId} not found`);
@@ -95,7 +91,7 @@ export class UserService {
       if (!userInDB) {
         throw new NotFoundException(`User with email ${email} not found`);
       }
-      let OTPCode = generateRandomDigits(6);
+      const OTPCode = generateRandomDigits(6);
       userInDB.authCode = OTPCode.toString();
       await userInDB.save();
 
