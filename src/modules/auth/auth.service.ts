@@ -25,7 +25,6 @@ export class AuthService {
       expiresIn: this.config.get('JWT_EXPIRES_IN'),
       secret: jwtSecret,
     });
-
     return { access_token: token };
   }
 
@@ -40,7 +39,6 @@ export class AuthService {
     user.authCode = undefined;
 
     const token = await this.signToken(user._id, user.email);
-
     return { user, token: token.access_token };
   }
 

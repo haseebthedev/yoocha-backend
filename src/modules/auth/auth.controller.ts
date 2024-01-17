@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ForgotPassDTO, ResetPassDTO, SignInDTO, SignUpDTO } from './dto';
 
@@ -8,7 +8,6 @@ export class AuthController {
 
   @Post('signin')
   signin(@Body() dto: SignInDTO) {
-    console.log('dto === ', dto);
     return this.authService.signin(dto);
   }
 

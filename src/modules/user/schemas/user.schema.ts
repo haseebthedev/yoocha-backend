@@ -1,11 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, isBoolean } from 'class-validator';
 import { HydratedDocument } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
 import * as bcrypt from 'bcrypt';
 
 @Schema()
 export class User extends BaseSchema {
+  @Prop({ default: null })
+  @IsString()
+  profilePicture: string;
+
   @Prop({ default: null })
   @IsNotEmpty()
   firstname: string;
@@ -14,9 +18,12 @@ export class User extends BaseSchema {
   @IsNotEmpty()
   lastname: string;
 
-  @Prop({ unique: true })
+  @Prop({ unique: true, lowercase: true })
   @IsNotEmpty()
   email: string;
+
+  @Prop({ default: false })
+  isEmailVerified: boolean;
 
   @Prop()
   @IsString()
@@ -33,10 +40,9 @@ export const UserSchema = SchemaFactory.createForClass(User).set(
   false,
 );
 
+// If password is changed or this is a new user, generate hash
 UserSchema.pre('save', async function (next) {
   const user = this as UserDocument;
-
-  // If password is changed or this is a new user, generate hash
   if (user.isModified('password') || user.isNew) {
     const hash = await bcrypt.hash(user.password, 10);
     user.password = hash;
