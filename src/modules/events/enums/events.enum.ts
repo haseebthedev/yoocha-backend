@@ -1,5 +1,5 @@
 export enum Events {
-  MESSAGE = 'message',
+  SEND_MESSAGE = 'send_message',
   DELETE_MESSAGE = 'delete_message',
   JOIN_ROOM = 'join_room',
   LEAVE_ROOM = 'leave_room',

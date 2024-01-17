@@ -1,11 +1,7 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ChatRoom } from './schemas';
-import { Model, Types } from 'mongoose';
+import { ChatRoom, ChatMessage } from './schemas';
+import { FilterQuery, Model, PaginateModel, Types } from 'mongoose';
 import { UserService } from '../user/user.service';
 
 type ParticipantI = { user: Types.ObjectId; role: string }[];
@@ -14,13 +10,11 @@ type ParticipantI = { user: Types.ObjectId; role: string }[];
 export class ChatService {
   constructor(
     @InjectModel(ChatRoom.name) private chatRoomModel: Model<ChatRoom>,
+    @InjectModel(ChatMessage.name) private ChatMessageModel: PaginateModel<ChatMessage>,
     private userService: UserService,
   ) {}
 
-  async roomAlreadyExists(
-    user1: Types.ObjectId,
-    user2: Types.ObjectId,
-  ): Promise<boolean> {
+  async roomAlreadyExists(user1: Types.ObjectId, user2: Types.ObjectId): Promise<boolean> {
     const room = await this.chatRoomModel.findOne({
       $and: [
         {
@@ -73,8 +67,7 @@ export class ChatService {
 
     // Check if the user is an INVITEE in the room
     const isInvitee = room.participants.some(
-      (item) =>
-        item.user.toString() === inviteeUserId && item.role === 'INVITEE',
+      (item) => item.user.toString() === inviteeUserId && item.role === 'INVITEE',
     );
 
     if (!isInvitee) {
@@ -91,7 +84,24 @@ export class ChatService {
 
   async deleteRoom() {}
 
-  async sendMessage() {}
+  async sendMessage(senderId: string, payload: ChatMessage) {
+    const message = await this.ChatMessageModel.create({
+      sender: senderId,
+      chatRoomId: payload.chatRoomId,
+      files: payload.files,
+      link: payload.files,
+      message: payload.message,
+    });
+
+    message.save();
+  }
 
   async deleteMessage() {}
+
+  async listMessages(
+    query?: FilterQuery<ChatMessage>,
+    options: { page: number; limit: number } = { page: 1, limit: 10 },
+  ) {
+    return await this.ChatMessageModel.paginate(query, options);
+  }
 }
