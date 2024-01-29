@@ -35,10 +35,7 @@ export class User extends BaseSchema {
 }
 
 export type UserDocument = HydratedDocument<User>;
-export const UserSchema = SchemaFactory.createForClass(User).set(
-  'versionKey',
-  false,
-);
+export const UserSchema = SchemaFactory.createForClass(User).set('versionKey', false);
 
 // If password is changed or this is a new user, generate hash
 UserSchema.pre('save', async function (next) {

@@ -7,9 +7,9 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Events } from './enums';
-import { ChatService } from '../Chat/chat.service';
+import { ChatService } from '../chat/chat.service';
 import { Types } from 'mongoose';
-import { ChatMessageDocument } from '../Chat/schemas';
+import { ChatMessageDocument } from '../chat/schemas';
 
 type ParticipantI = { user: Types.ObjectId; role: string }[];
 

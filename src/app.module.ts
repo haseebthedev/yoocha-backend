@@ -4,6 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { EventsModule } from './modules/events/events.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ResultInterceptor } from './common/interceptors/result.interceptors';
 
 @Module({
   imports: [
@@ -12,6 +14,12 @@ import { EventsModule } from './modules/events/events.module';
     AuthModule,
     UserModule,
     EventsModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResultInterceptor,
+    },
   ],
 })
 export class AppModule {}

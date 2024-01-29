@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
+import * as Paginate from 'mongoose-paginate-v2';
 
 @Schema()
 export class ChatRoom extends BaseSchema {
@@ -23,7 +24,6 @@ export class ChatRoom extends BaseSchema {
 }
 
 export type ChatRoomDocument = HydratedDocument<ChatRoom>;
-export const ChatRoomSchema = SchemaFactory.createForClass(ChatRoom).set(
-  'versionKey',
-  false,
-);
+export const ChatRoomSchema = SchemaFactory.createForClass(ChatRoom).set('versionKey', false);
+
+ChatRoomSchema.plugin(Paginate);
