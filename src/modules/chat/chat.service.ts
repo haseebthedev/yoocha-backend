@@ -1,26 +1,23 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ChatRoom } from './schemas';
-import { Model, Types } from 'mongoose';
+import { ChatRoom, ChatMessage } from './schemas';
+import { FilterQuery, PaginateModel, PaginateOptions, Types } from 'mongoose';
 import { UserService } from '../user/user.service';
+import { ChatRoomState } from './enums/room.enum';
+import { ErrorMessage } from 'src/common/enums/error.enum';
+import { CustomError } from 'src/common/errors/api.error';
 
 type ParticipantI = { user: Types.ObjectId; role: string }[];
 
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(ChatRoom.name) private chatRoomModel: Model<ChatRoom>,
+    @InjectModel(ChatRoom.name) private chatRoomModel: PaginateModel<ChatRoom>,
+    @InjectModel(ChatMessage.name) private ChatMessageModel: PaginateModel<ChatMessage>,
     private userService: UserService,
   ) {}
 
-  async roomAlreadyExists(
-    user1: Types.ObjectId,
-    user2: Types.ObjectId,
-  ): Promise<boolean> {
+  async roomAlreadyExists(user1: Types.ObjectId, user2: Types.ObjectId): Promise<boolean> {
     const room = await this.chatRoomModel.findOne({
       $and: [
         {
@@ -38,7 +35,6 @@ export class ChatService {
   }
 
   async createRoom(participants: ParticipantI) {
-    console.log('participants === ', participants);
     const users = participants.map((el) => el.user);
 
     // Fetch users in parallel
@@ -73,8 +69,7 @@ export class ChatService {
 
     // Check if the user is an INVITEE in the room
     const isInvitee = room.participants.some(
-      (item) =>
-        item.user.toString() === inviteeUserId && item.role === 'INVITEE',
+      (item) => item.user.toString() === inviteeUserId && item.role === 'INVITEE',
     );
 
     if (!isInvitee) {
@@ -91,7 +86,48 @@ export class ChatService {
 
   async deleteRoom() {}
 
-  async sendMessage() {}
+  async sendMessage(senderId: string, payload: ChatMessage) {
+    try {
+      const message = await this.ChatMessageModel.create({
+        sender: senderId,
+        chatRoomId: payload.chatRoomId,
+        files: payload.files,
+        link: payload.files,
+        message: payload.message,
+      });
 
-  async deleteMessage() {}
+      message.save();
+    } catch (error) {
+      throw new HttpException(ErrorMessage.SERVER_ERROR, 500);
+    }
+  }
+
+  async listMessages(roomId: string, paginateOptions?: PaginateOptions) {
+    try {
+      if (!roomId) {
+        throw new CustomError('RoomId is invalid or null', HttpStatus.BAD_REQUEST);
+      }
+
+      const query: FilterQuery<ChatMessage> = {
+        chatRoomId: roomId,
+      };
+
+      return await this.ChatMessageModel.paginate(query, paginateOptions);
+    } catch (error) {
+      throw new HttpException(ErrorMessage.SERVER_ERROR, 500);
+    }
+  }
+
+  async listRooms(userId: string, paginateOptions?: PaginateOptions) {
+    try {
+      const query: FilterQuery<ChatMessage> = {
+        'participants.user': userId,
+        status: ChatRoomState.ACTIVE,
+      };
+
+      return await this.chatRoomModel.paginate(query, paginateOptions);
+    } catch (error) {
+      throw new HttpException(ErrorMessage.SERVER_ERROR, 500);
+    }
+  }
 }
