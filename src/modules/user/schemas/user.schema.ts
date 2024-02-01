@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsNotEmpty, IsString, isBoolean } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { HydratedDocument } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
 import * as bcrypt from 'bcrypt';

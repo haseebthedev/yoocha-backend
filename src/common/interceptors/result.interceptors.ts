@@ -8,10 +8,18 @@ export class ResultInterceptor implements NestInterceptor {
     return next.handle().pipe(
       map((data) => {
         if (!data) {
-          return { result: { message: 'No data found for this id' } };
+          return { result: { message: 'Nothing found!' } };
         }
-        return { result: data };
+        return { result: validate(data) };
       }),
     );
   }
 }
+
+const validate = (data: any) => {
+  if (data?.password || data?.authCode) {
+    const { password, authCode, ...rest } = data.toJSON();
+    return rest;
+  }
+  return data;
+};
