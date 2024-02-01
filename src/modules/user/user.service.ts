@@ -46,22 +46,15 @@ export class UserService {
     try {
       const user = await this.userModel.findById(userId).exec();
 
-      if (!user) {
-        throw new NotFoundException(`User with ID ${userId} not found`);
-      }
+      if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
 
-      user.authCode = undefined;
-      user.password = undefined;
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
   }
 
-  async findByIdandUpdate(
-    userId: string,
-    dto: UpdateProfileDTO,
-  ): Promise<User> {
+  async findByIdandUpdate(userId: string, dto: UpdateProfileDTO): Promise<User> {
     try {
       const user = await this.userModel.findByIdAndUpdate(userId, dto).exec();
 
@@ -103,11 +96,7 @@ export class UserService {
     }
   }
 
-  async resetPassword(
-    email: string,
-    authCode: string,
-    newPassword: string,
-  ): Promise<{ result: string }> {
+  async resetPassword(email: string, authCode: string, newPassword: string): Promise<{ result: string }> {
     try {
       const user = await this.userModel.findOne({ email: email });
       if (!user) {
