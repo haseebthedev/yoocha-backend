@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
 import { HydratedDocument } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
 import * as bcrypt from 'bcrypt';
@@ -32,6 +32,14 @@ export class User extends BaseSchema {
 
   @Prop({ default: null })
   authCode: string;
+
+  @Prop({ default: null })
+  @IsDateString()
+  dateOfBirth: string;
+
+  @Prop({ default: null })
+  @IsNotEmpty()
+  country: string;
 }
 
 export type UserDocument = HydratedDocument<User>;
