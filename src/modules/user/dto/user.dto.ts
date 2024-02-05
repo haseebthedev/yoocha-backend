@@ -13,6 +13,10 @@ export class ChangePassDTO {
 export class UpdateProfileDTO {
   @IsString()
   @IsOptional()
+  profilePicture: string;
+
+  @IsString()
+  @IsOptional()
   firstname: string;
 
   @IsString()

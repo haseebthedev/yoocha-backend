@@ -6,8 +6,8 @@ import { UserService } from '../user/user.service';
 import { ChatRoomState } from './enums/room.enum';
 import { ErrorMessage } from 'src/common/enums/error.enum';
 import { CustomError } from 'src/common/errors/api.error';
-
-type ParticipantI = { user: Types.ObjectId; role: string }[];
+import { ParticipantI } from 'src/interfaces';
+import { ParticipantType } from 'src/common/enums/user.enum';
 
 @Injectable()
 export class ChatService {
@@ -17,15 +17,15 @@ export class ChatService {
     private userService: UserService,
   ) {}
 
-  async roomAlreadyExists(user1: Types.ObjectId, user2: Types.ObjectId): Promise<boolean> {
+  async roomAlreadyExists(firstUser: Types.ObjectId, secondUser: Types.ObjectId): Promise<boolean> {
     const room = await this.chatRoomModel.findOne({
       $and: [
         {
-          'participants.user': user1,
+          'participants.user': firstUser,
           'participants.role': { $in: ['INITIATOR', 'INVITEE'] },
         },
         {
-          'participants.user': user2,
+          'participants.user': secondUser,
           'participants.role': { $in: ['INITIATOR', 'INVITEE'] },
         },
       ],
@@ -34,7 +34,7 @@ export class ChatService {
     return !!room;
   }
 
-  async createRoom(participants: ParticipantI) {
+  async createRoom(participants: ParticipantI[]) {
     const users = participants.map((el) => el.user);
 
     // Fetch users in parallel
@@ -58,28 +58,20 @@ export class ChatService {
   }
 
   async joinRoom(roomId: string, inviteeUserId: string) {
-    console.log('inviteeUserId === ', inviteeUserId);
-
-    // Fetch the room by its ID
     const room = await this.chatRoomModel.findById(roomId);
 
-    if (!room) {
-      throw new NotFoundException('Room not found');
-    }
+    if (!room) throw new NotFoundException('Room not found');
 
     // Check if the user is an INVITEE in the room
     const isInvitee = room.participants.some(
-      (item) => item.user.toString() === inviteeUserId && item.role === 'INVITEE',
+      (item) => item.user.toString() === inviteeUserId && item.role === ParticipantType.INVITEE,
     );
 
-    if (!isInvitee) {
-      throw new NotFoundException('User is not an INVITEE in this room');
-    }
+    if (!isInvitee) throw new NotFoundException('User is not an INVITEE in this room');
 
     // Update the room status to 'ACTIVE'
     room.status = 'ACTIVE';
 
-    // Save the updated room
     await room.save();
     return room;
   }
@@ -87,47 +79,36 @@ export class ChatService {
   async deleteRoom() {}
 
   async sendMessage(senderId: string, payload: ChatMessage) {
-    try {
-      const message = await this.ChatMessageModel.create({
-        sender: senderId,
-        chatRoomId: payload.chatRoomId,
-        files: payload.files,
-        link: payload.files,
-        message: payload.message,
-      });
+    const message = await this.ChatMessageModel.create({
+      sender: senderId,
+      chatRoomId: payload.chatRoomId,
+      files: payload.files,
+      link: payload.files,
+      message: payload.message,
+    });
 
-      message.save();
-    } catch (error) {
-      throw new HttpException(ErrorMessage.SERVER_ERROR, 500);
-    }
+    await message.save();
+    return message;
   }
 
   async listMessages(roomId: string, paginateOptions?: PaginateOptions) {
-    try {
-      if (!roomId) {
-        throw new CustomError('RoomId is invalid or null', HttpStatus.BAD_REQUEST);
-      }
-
-      const query: FilterQuery<ChatMessage> = {
-        chatRoomId: roomId,
-      };
-
-      return await this.ChatMessageModel.paginate(query, paginateOptions);
-    } catch (error) {
-      throw new HttpException(ErrorMessage.SERVER_ERROR, 500);
+    if (!roomId) {
+      throw new CustomError('RoomId is invalid or null', HttpStatus.BAD_REQUEST);
     }
+
+    const query: FilterQuery<ChatMessage> = {
+      chatRoomId: roomId,
+    };
+
+    return await this.ChatMessageModel.paginate(query, paginateOptions);
   }
 
   async listRooms(userId: string, paginateOptions?: PaginateOptions) {
-    try {
-      const query: FilterQuery<ChatMessage> = {
-        'participants.user': userId,
-        status: ChatRoomState.ACTIVE,
-      };
+    const query: FilterQuery<ChatMessage> = {
+      'participants.user': userId,
+      status: ChatRoomState.ACTIVE,
+    };
 
-      return await this.chatRoomModel.paginate(query, paginateOptions);
-    } catch (error) {
-      throw new HttpException(ErrorMessage.SERVER_ERROR, 500);
-    }
+    return await this.chatRoomModel.paginate(query, paginateOptions);
   }
 }
