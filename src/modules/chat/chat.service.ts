@@ -1,10 +1,9 @@
-import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ChatRoom, ChatMessage } from './schemas';
 import { FilterQuery, PaginateModel, PaginateOptions, Types } from 'mongoose';
 import { UserService } from '../user/user.service';
 import { ChatRoomState } from './enums/room.enum';
-import { ErrorMessage } from 'src/common/enums/error.enum';
 import { CustomError } from 'src/common/errors/api.error';
 import { ParticipantI } from 'src/interfaces';
 import { ParticipantType } from 'src/common/enums/user.enum';
@@ -117,7 +116,7 @@ export class ChatService {
     const possibleFriends = await Promise.all(
       users.filter(async (user) => !(await this.roomAlreadyExists(userId, user._id)) ?? user),
     );
-    
+
     return possibleFriends;
   }
 }

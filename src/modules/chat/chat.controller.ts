@@ -19,7 +19,7 @@ export class ChatController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Body('roomId', MongoIdValidationPipe) roomId: string,
   ) {
-    return await this.chatService.listMessages(roomId, { page, limit });
+    return await this.chatService.listMessages(roomId, { page, limit, populate: 'sender' });
   }
 
   @Post('list-rooms')
