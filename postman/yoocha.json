@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "5ffee408-c55a-45c4-850b-569599dff4c1",
+		"_postman_id": "6bec290e-2f36-4d49-a184-788bc72db816",
 		"name": "Yoocha",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "28128346"
+		"_exporter_id": "10799584"
 	},
 	"item": [
 		{
@@ -53,12 +53,9 @@
 							}
 						},
 						"url": {
-							"raw": "https://yoocha-backend-78364795b9c0.herokuapp.com/auth/signin",
-							"protocol": "https",
+							"raw": "{{API_URL}}/auth/signin",
 							"host": [
-								"yoocha-backend-78364795b9c0",
-								"herokuapp",
-								"com"
+								"{{API_URL}}"
 							],
 							"path": [
 								"auth",
@@ -186,7 +183,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTk0ZmE1NTczOTQ2NjdkN2MwZDM0MmEiLCJlbWFpbCI6Imhhc2VlYkBnbWFpbC5jb20iLCJpYXQiOjE3MDQyNjIyNzUsImV4cCI6MTcwNDM0ODY3NX0.HnYEJgdXX6i9CavRpV5HMTxMSyIM7CMiWtJqXRjPIng",
+									"value": "{{token}}",
 									"type": "string"
 								}
 							]
@@ -195,7 +192,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"oldPassword\": \"12345678\",\n    \"newPassword\": \"1234\"\n}",
+							"raw": "{\n    \"oldPassword\": \"Test@123\",\n    \"newPassword\": \"Test@1234\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -269,7 +266,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"lastname\": \"Ahmed\"\n}",
+							"raw": "{\n    \"firstname\": \"Sadia\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -334,6 +331,43 @@
 					"response": []
 				},
 				{
+					"name": "Friends Suggestions",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3333/chat/friend-suggestions",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"friend-suggestions"
+							],
+							"query": [
+								{
+									"key": "Authorization",
+									"value": "Bearer {{token}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "List chat messages",
 					"request": {
 						"auth": {
@@ -350,7 +384,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"roomId\": \"65a80ff723958a818c9f1c3a\"\n}",
+							"raw": "{\n    \"roomId\": \"65c2673ce3716a74524e801a\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -358,7 +392,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3333/chat/list-messages?page=1&limit=1",
+							"raw": "http://localhost:3333/chat/list-messages?page=1&limit=10",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -375,7 +409,7 @@
 								},
 								{
 									"key": "limit",
-									"value": "1"
+									"value": "10"
 								}
 							]
 						}
