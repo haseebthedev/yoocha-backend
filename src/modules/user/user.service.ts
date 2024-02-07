@@ -1,15 +1,16 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, PaginateModel } from 'mongoose';
 import { SignUpDTO } from '../auth/dto';
 import { generateRandomDigits } from 'src/common/utils/common';
 import { ChangePassDTO, UpdateProfileDTO } from './dto';
+import { ChatRoom } from '../chat/schemas';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(@InjectModel(User.name) private userModel: PaginateModel<User>) {}
 
   async create(dto: SignUpDTO): Promise<User> {
     const userInDB = await this.userModel.findOne({ email: dto.email });
@@ -36,7 +37,7 @@ export class UserService {
   }
 
   async findByIdandUpdate(userId: string, dto: UpdateProfileDTO): Promise<User> {
-    const user = await this.userModel.findByIdAndUpdate(userId, dto).exec();
+    const user = await this.userModel.findByIdAndUpdate(userId, dto, { new: true }).exec();
 
     if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
 

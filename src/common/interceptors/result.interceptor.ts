@@ -10,16 +10,16 @@ export class ResultInterceptor implements NestInterceptor {
         if (!data) {
           return { result: { message: 'Nothing found!' } };
         }
-        return { result: validate(data) };
+        return { result: this.validate(data) };
       }),
     );
   }
-}
 
-const validate = (data: any) => {
-  if (data?.password || data?.authCode) {
-    const { password, authCode, ...rest } = data.toJSON();
-    return rest;
+  private validate(data: any) {
+    if (data?.password || data?.authCode) {
+      const { password, authCode, ...rest } = data.toJSON();
+      return rest;
+    }
+    return data;
   }
-  return data;
-};
+}

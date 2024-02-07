@@ -8,6 +8,7 @@ import { ErrorMessage } from 'src/common/enums/error.enum';
 import { CustomError } from 'src/common/errors/api.error';
 import { ParticipantI } from 'src/interfaces';
 import { ParticipantType } from 'src/common/enums/user.enum';
+import { User } from '../user/schemas/user.schema';
 
 @Injectable()
 export class ChatService {
@@ -17,7 +18,7 @@ export class ChatService {
     private userService: UserService,
   ) {}
 
-  async roomAlreadyExists(firstUser: Types.ObjectId, secondUser: Types.ObjectId): Promise<boolean> {
+  async roomAlreadyExists(firstUser: Types.ObjectId | string, secondUser: Types.ObjectId | string): Promise<boolean> {
     const room = await this.chatRoomModel.findOne({
       $and: [
         {
@@ -110,5 +111,13 @@ export class ChatService {
     };
 
     return await this.chatRoomModel.paginate(query, paginateOptions);
+  }
+
+  async friendSuggestions(userId: string, users: User[]) {
+    const possibleFriends = await Promise.all(
+      users.filter(async (user) => !(await this.roomAlreadyExists(userId, user._id)) ?? user),
+    );
+    
+    return possibleFriends;
   }
 }

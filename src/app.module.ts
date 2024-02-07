@@ -5,7 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { EventsModule } from './modules/events/events.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ResultInterceptor } from './common/interceptors/result.interceptors';
+import { ObjectIdInterceptor, ResultInterceptor } from './common/interceptors';
 
 @Module({
   imports: [
@@ -19,6 +19,10 @@ import { ResultInterceptor } from './common/interceptors/result.interceptors';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResultInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ObjectIdInterceptor,
     },
   ],
 })
