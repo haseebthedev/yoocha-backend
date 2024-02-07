@@ -28,11 +28,11 @@ export class ChatController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @GetUser('id', MongoIdValidationPipe) userId: string,
   ) {
-    return await this.chatService.listRooms(userId, { page, limit });
+    return await this.chatService.listRooms(userId, { page, limit, populate: 'participants.user' });
   }
 
   @Get('friend-suggestions')
-  async friendSuggestions(@GetUser('_id') userId: string) {
+  async friendSuggestions(@GetUser('id', MongoIdValidationPipe) userId: string) {
     const users = await this.userService.findAll();
     const suggestions = await this.chatService.friendSuggestions(userId, users);
 
