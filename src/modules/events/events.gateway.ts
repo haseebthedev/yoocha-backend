@@ -47,11 +47,15 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(Events.SEND_MESSAGE)
   async onSendMessage(client: Socket, payload: ChatMessageDocument) {
-    // console.log('token: ' + token);
+    console.log('token: abd', payload);
 
-    await this.chatService.sendMessage(String(payload.sender), payload);
+    const newChatMessage = await this.chatService.sendMessage(String(payload.sender), payload);
+
+    console.log('newChatMessage === ', newChatMessage);
 
     // Send the message to the specified user
-    // this.server.to(to).emit('message', { from: client.id, message });
+    // this.server.to(payload.chatRoomId as any).emit('receive_message', { ...newChatMessage });
+
+    this.server.emit('receive_message', { ...newChatMessage });
   }
 }
