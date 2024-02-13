@@ -33,7 +33,8 @@ export class ChatController {
 
   @Get('friend-suggestions')
   async friendSuggestions(@GetUser('id', MongoIdValidationPipe) userId: string) {
-    const users = await this.userService.findAll();
+    const users = await this.userService.findAll()
+    // const usersWithOutMe = users.filter(user => user._id !== userId)
     const suggestions = await this.chatService.friendSuggestions(userId, users);
 
     return { doc: suggestions.slice(0, 10) };

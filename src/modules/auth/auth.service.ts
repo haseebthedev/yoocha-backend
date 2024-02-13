@@ -5,6 +5,7 @@ import { User } from '../user/schemas/user.schema';
 import { UserService } from '../user/user.service';
 import { ForgotPassDTO, ResetPassDTO, SignInDTO, SignUpDTO } from './dto';
 import * as bcrypt from 'bcrypt';
+import { JWTDecodedUserI } from 'src/interfaces';
 
 @Injectable()
 export class AuthService {
@@ -14,10 +15,7 @@ export class AuthService {
     private userService: UserService,
   ) {}
 
-  async signToken(
-    userId: string,
-    email: string,
-  ): Promise<{ access_token: string }> {
+  async signToken(userId: string, email: string): Promise<{ access_token: string }> {
     const payload = { sub: userId, email };
     const jwtSecret = this.config.get('JWT_SECRET');
 
@@ -26,6 +24,16 @@ export class AuthService {
       secret: jwtSecret,
     });
     return { access_token: token };
+  }
+
+  async verifyToken(token: string): Promise<Partial<JWTDecodedUserI>> {
+    const jwtSecret = await this.config.get('JWT_SECRET');
+    const decoded = await this.jwt.verify(token, { secret: jwtSecret });
+
+    if (!decoded) {
+      throw new UnauthorizedException('Token is invalid or expired');
+    }
+    return decoded;
   }
 
   async signin(dto: SignInDTO): Promise<{ user: User; token: string }> {
@@ -54,10 +62,6 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPassDTO): Promise<{ result: string }> {
-    return await this.userService.resetPassword(
-      dto.email,
-      dto.authCode,
-      dto.newPassword,
-    );
+    return await this.userService.resetPassword(dto.email, dto.authCode, dto.newPassword);
   }
 }

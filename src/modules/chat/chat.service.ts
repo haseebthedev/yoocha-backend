@@ -112,11 +112,16 @@ export class ChatService {
     return await this.chatRoomModel.paginate(query, paginateOptions);
   }
 
+  async listActiveRoomsIdsByUserId(userId: string) {
+    return await this.chatRoomModel.find({ status: 'ACTIVE', 'participants.user': userId }, { _id: 1 });
+  }
+
   async friendSuggestions(userId: string, users: User[]) {
     const possibleFriends = await Promise.all(
-      users.filter(async (user) => !(await this.roomAlreadyExists(userId, user._id)) ?? user),
+      users
+        .filter(async (user) => !(await this.roomAlreadyExists(userId, user._id)) ?? user)
+        .filter((user) => String(user._id) !== userId),
     );
-
     return possibleFriends;
   }
 }
