@@ -1,9 +1,20 @@
-import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Get,
+  HttpStatus,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards';
 import { GetUser } from 'src/common/decorators';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 import { UserService } from '../user/user.service';
+import { ListUserRequestsDto } from './dto';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -33,10 +44,18 @@ export class ChatController {
 
   @Get('friend-suggestions')
   async friendSuggestions(@GetUser('id', MongoIdValidationPipe) userId: string) {
-    const users = await this.userService.findAll()
-    // const usersWithOutMe = users.filter(user => user._id !== userId)
+    const users = await this.userService.findAll();
     const suggestions = await this.chatService.friendSuggestions(userId, users);
-
     return { doc: suggestions.slice(0, 10) };
+  }
+
+  @Post('list-user-requests')
+  async listUserRequests(
+    @Body() body: ListUserRequestsDto,
+    @GetUser('id', MongoIdValidationPipe) userId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return await this.chatService.listUserRequests(userId, body, { page, limit, populate: 'participants.user' });
   }
 }

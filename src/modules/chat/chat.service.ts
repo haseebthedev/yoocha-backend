@@ -1,4 +1,4 @@
-import { ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ChatRoom, ChatMessage } from './schemas';
 import { FilterQuery, PaginateModel, PaginateOptions, Types } from 'mongoose';
@@ -8,6 +8,7 @@ import { CustomError } from 'src/common/errors/api.error';
 import { ParticipantI } from 'src/interfaces';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { User } from '../user/schemas/user.schema';
+import { ListUserRequestsDto } from './dto';
 
 @Injectable()
 export class ChatService {
@@ -93,7 +94,7 @@ export class ChatService {
 
   async listMessages(roomId: string, paginateOptions?: PaginateOptions) {
     if (!roomId) {
-      throw new CustomError('RoomId is invalid or null', HttpStatus.BAD_REQUEST);
+      throw new HttpException('RoomId is invalid or null', HttpStatus.BAD_REQUEST);
     }
 
     const query: FilterQuery<ChatMessage> = {
@@ -123,5 +124,30 @@ export class ChatService {
         .filter((user) => String(user._id) !== userId),
     );
     return possibleFriends;
+  }
+
+  async listUserRequests(userId: string, body: ListUserRequestsDto, paginateOptions?: PaginateOptions) {
+    const query: FilterQuery<ChatMessage> = {
+      status: ChatRoomState.PENDING,
+      participants: {
+        $elemMatch: {
+          user: userId,
+          role: body.role,
+        },
+      },
+    };
+
+    const result: any = await this.chatRoomModel.paginate(query, paginateOptions);
+    const modifiedDocs = result.docs.map((room) => {
+      const user = room.participants.find((participant) => String(participant.user._id) !== userId).user;
+      return {
+        ...room.toObject(),
+        user: user,
+        participants: undefined,
+      };
+    });
+
+    result.docs = modifiedDocs;
+    return result;
   }
 }
