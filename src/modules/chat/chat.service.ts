@@ -23,11 +23,11 @@ export class ChatService {
       $and: [
         {
           'participants.user': firstUser,
-          'participants.role': { $in: ['INITIATOR', 'INVITEE'] },
+          'participants.role': { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] },
         },
         {
           'participants.user': secondUser,
-          'participants.role': { $in: ['INITIATOR', 'INVITEE'] },
+          'participants.role': { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] },
         },
       ],
     });
@@ -71,7 +71,7 @@ export class ChatService {
     if (!isInvitee) throw new NotFoundException('User is not an INVITEE in this room');
 
     // Update the room status to 'ACTIVE'
-    room.status = 'ACTIVE';
+    room.status = ChatRoomState.ACTIVE;
 
     await room.save();
     return room;
@@ -114,7 +114,7 @@ export class ChatService {
   }
 
   async listActiveRoomsIdsByUserId(userId: string) {
-    return await this.chatRoomModel.find({ status: 'ACTIVE', 'participants.user': userId }, { _id: 1 });
+    return await this.chatRoomModel.find({ status: ChatRoomState.ACTIVE, 'participants.user': userId }, { _id: 1 });
   }
 
   async friendSuggestions(userId: string, users: User[]) {
@@ -138,10 +138,10 @@ export class ChatService {
     };
 
     const result: any = await this.chatRoomModel.paginate(query, paginateOptions);
-    const modifiedDocs = result.docs.map((room) => {
+    const modifiedDocs = result.docs.map((room: ChatRoom) => {
       const user = room.participants.find((participant) => String(participant.user._id) !== userId).user;
       return {
-        ...room.toObject(),
+        ...room,
         user: user,
         participants: undefined,
       };

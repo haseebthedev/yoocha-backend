@@ -2,6 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
 import * as Paginate from 'mongoose-paginate-v2';
+import { ParticipantType } from 'src/common/enums/user.enum';
+import { ChatRoomState } from '../enums/room.enum';
 
 @Schema()
 export class ChatRoom extends BaseSchema {
@@ -16,11 +18,14 @@ export class ChatRoom extends BaseSchema {
   })
   participants: Array<{
     user: Types.ObjectId;
-    role: 'INITIATOR' | 'INVITEE';
+    role: keyof typeof ParticipantType;
   }>;
 
-  @Prop({ default: 'PENDING', required: false })
-  status: 'ACTIVE' | 'PENDING';
+  @Prop({ default: ChatRoomState.PENDING, required: false })
+  status: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null, required: false })
+  blockedBy: Types.ObjectId;
 }
 
 export type ChatRoomDocument = HydratedDocument<ChatRoom>;

@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { User } from '../user/schemas/user.schema';
 import { UserService } from '../user/user.service';
 import { ForgotPassDTO, ResetPassDTO, SignInDTO, SignUpDTO } from './dto';
@@ -27,13 +27,20 @@ export class AuthService {
   }
 
   async verifyToken(token: string): Promise<Partial<JWTDecodedUserI>> {
-    const jwtSecret = await this.config.get('JWT_SECRET');
-    const decoded = await this.jwt.verify(token, { secret: jwtSecret });
+    try {
+      const jwtSecret = await this.config.get('JWT_SECRET');
+      const decoded = await this.jwt.verify(token, { secret: jwtSecret });
 
-    if (!decoded) {
-      throw new UnauthorizedException('Token is invalid or expired');
+      if (!decoded) {
+        throw new UnauthorizedException('Token is invalid or expired');
+      }
+      return decoded;
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException('Token has expired');
+      }
+      throw new UnauthorizedException('Token is invalid');
     }
-    return decoded;
   }
 
   async signin(dto: SignInDTO): Promise<{ user: User; token: string }> {
@@ -43,18 +50,12 @@ export class AuthService {
     if (!isMatch) {
       throw new UnauthorizedException('Either email or password is invalid');
     }
-    user.password = undefined;
-    user.authCode = undefined;
-
     const token = await this.signToken(user._id, user.email);
     return { user, token: token.access_token };
   }
 
   async signup(dto: SignUpDTO): Promise<User> {
-    const user = await this.userService.create(dto);
-    user.password = undefined;
-    user.authCode = undefined;
-    return user;
+    return await this.userService.create(dto);
   }
 
   async forgotPassword(dto: ForgotPassDTO): Promise<{ result: string }> {
