@@ -21,11 +21,11 @@ export class ChatRoom extends BaseSchema {
     role: keyof typeof ParticipantType;
   }>;
 
-  @Prop({ default: ChatRoomState.PENDING, required: false })
+  @Prop({ default: ChatRoomState.PENDING, required: false, enum: ChatRoomState })
   status: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User', default: null, required: false })
-  blockedBy: Types.ObjectId;
+  blockedBy: string
 }
 
 export type ChatRoomDocument = HydratedDocument<ChatRoom>;

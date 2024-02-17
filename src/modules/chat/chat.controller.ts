@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  DefaultValuePipe,
-  Get,
-  HttpStatus,
-  ParseIntPipe,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards';
 import { GetUser } from 'src/common/decorators';
@@ -57,5 +47,30 @@ export class ChatController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
     return await this.chatService.listUserRequests(userId, body, { page, limit, populate: 'participants.user' });
+  }
+
+  @Get('list-blocked-users')
+  async listBlockedUsers(
+    @GetUser('id', MongoIdValidationPipe) userId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return await this.chatService.listBlockedUsers(userId, { page, limit, populate: 'participants.user' });
+  }
+
+  @Patch('block-user')
+  async blockUser(
+    @GetUser('id', MongoIdValidationPipe) userId: string,
+    @Query('id', MongoIdValidationPipe) userIdToBlock: string,
+  ) {
+    return await this.chatService.blockUser(userId, userIdToBlock);
+  }
+
+  @Patch('unblock-user')
+  async unBlockUser(
+    @GetUser('id', MongoIdValidationPipe) userId: string,
+    @Query('id', MongoIdValidationPipe) userIdToBlock: string,
+  ) {
+    return await this.chatService.unBlockUser(userId, userIdToBlock);
   }
 }

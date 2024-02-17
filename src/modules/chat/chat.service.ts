@@ -138,10 +138,10 @@ export class ChatService {
     };
 
     const result: any = await this.chatRoomModel.paginate(query, paginateOptions);
-    const modifiedDocs = result.docs.map((room: ChatRoom) => {
+    const modifiedDocs = result.docs.map((room) => {
       const user = room.participants.find((participant) => String(participant.user._id) !== userId).user;
       return {
-        ...room,
+        ...room.toObject(),
         user: user,
         participants: undefined,
       };
@@ -149,5 +149,67 @@ export class ChatService {
 
     result.docs = modifiedDocs;
     return result;
+  }
+
+  async listBlockedUsers(userId: string, paginateOptions?: PaginateOptions) {
+    const query: FilterQuery<ChatRoom> = {
+      status: String(ChatRoomState.BLOCKED),
+      blockedBy: userId,
+    };
+
+    const result: any = await this.chatRoomModel.paginate(query, paginateOptions);
+    const modifiedDocs = result.docs.map((room) => {
+      const user = room.participants.find((participant) => String(participant.user._id) !== userId).user;
+      return {
+        ...room.toObject(),
+        user: user,
+        participants: undefined,
+      };
+    });
+
+    result.docs = modifiedDocs;
+    return result;
+  }
+
+  async blockUser(userId: string, userIdToBlock: string) {
+    const room = await this.chatRoomModel.findOne({
+      status: ChatRoomState.ACTIVE,
+      participants: {
+        $elemMatch: { user: userIdToBlock, role: { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] } },
+      },
+    });
+
+    if (!room) {
+      throw new NotFoundException("You don't have any active chat with this user");
+    }
+
+    if (room.status === ChatRoomState.BLOCKED) {
+      throw new ConflictException('This user is already blocked');
+    }
+
+    room.blockedBy = userId;
+    room.status = ChatRoomState.BLOCKED;
+    await room.save();
+
+    return { message: 'User has been blocked successfully' };
+  }
+
+  async unBlockUser(userId: string, userIdToBlock: string) {
+    const room = await this.chatRoomModel.findOne({
+      status: ChatRoomState.BLOCKED,
+      participants: {
+        $elemMatch: { user: userIdToBlock, role: { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] } },
+      },
+    });
+
+    if (!room) {
+      throw new NotFoundException('User not found or already unblocked');
+    }
+
+    room.blockedBy = null;
+    room.status = ChatRoomState.ACTIVE;
+    await room.save();
+
+    return { message: 'User has been unblocked successfully' };
   }
 }
