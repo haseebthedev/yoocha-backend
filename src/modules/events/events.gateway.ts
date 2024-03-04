@@ -11,12 +11,14 @@ import { ChatService } from '../chat/chat.service';
 import { ChatMessageDocument } from '../chat/schemas';
 import { ParticipantI } from 'src/interfaces';
 import { AuthService } from '../auth/auth.service';
+import { UserService } from '../user/user.service';
 
 @WebSocketGateway(parseInt(process.env.PORT), { namespace: 'events' })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private chatService: ChatService,
     private authService: AuthService,
+    private userService: UserService,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -72,7 +74,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage(Events.SEND_MESSAGE)
   async onSendMessage(client: Socket, payload: ChatMessageDocument) {
-    const newChatMessage = await this.chatService.sendMessage(String(payload.sender), payload);
-    this.server.to(payload.chatRoomId as any).emit(Events.RECEIVE_MESSAGE, { ...newChatMessage });
+    const messageResult: any = await this.chatService.sendMessage(String(payload.sender), payload);
+    const {password, isEmailVerified, authCode, ...senderInfo} = await this.userService.findById(String(messageResult.sender))
+    messageResult.sender = senderInfo 
+    this.server.to(String(payload.chatRoomId)).emit(Events.RECEIVE_MESSAGE, { ...messageResult });
   }
 }
