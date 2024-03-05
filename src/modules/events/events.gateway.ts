@@ -65,6 +65,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.chatService.createRoom(payload.participants);
   }
 
+  @SubscribeMessage(Events.CANCEL_FRIEND_REQUEST)
+  async onCancelFriendRequest(client: Socket, payload: { participants: ParticipantI[] }) {
+    await this.chatService.deleteRoom(payload.participants);
+  }
+
   @SubscribeMessage(Events.JOIN_ROOM)
   async onJoinRoom(client: Socket, payload: { roomId: string; inviteeId: string }) {
     console.log('payload :--: ', payload);

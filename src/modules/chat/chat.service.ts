@@ -57,6 +57,32 @@ export class ChatService {
     return room;
   }
 
+  async deleteRoom(participants: ParticipantI[]) {
+    const users = participants.map((el) => el.user);
+
+    // Fetch users in parallel
+    const [user1, user2] = await Promise.all([
+      this.userService.findById(String(users[0])),
+      this.userService.findById(String(users[1])),
+    ]);
+
+    if (!user1 || !user2) {
+      throw new NotFoundException('One or more users not found');
+    }
+
+    await this.chatRoomModel.deleteOne({
+      participants: {
+        $elemMatch: {
+          user: { $in: [String(users[0]), String(users[1])] },
+          role: { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] },
+        },
+      },
+      status: 'PENDING',
+    });
+
+    return { status: 'Deleted' };
+  }
+
   async joinRoom(roomId: string, inviteeUserId: string) {
     const room = await this.chatRoomModel.findById(roomId);
 
@@ -117,7 +143,7 @@ export class ChatService {
   async friendSuggestions(userId: string): Promise<User[]> {
     // Get all users except the current user
     const allUsers = await this.userService.findAll({ _id: { $ne: userId } });
-    
+
     const possibleFriends = await Promise.all(
       allUsers.map(async (user) => {
         const roomExists = await this.roomAlreadyExists(userId, user._id);

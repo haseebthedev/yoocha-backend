@@ -5,4 +5,5 @@ export enum Events {
   JOIN_ROOM = 'join_room',
   LEAVE_ROOM = 'leave_room',
   SEND_FRIEND_REQUEST = 'send_friend_request',
+  CANCEL_FRIEND_REQUEST = 'cancel_friend_request',
 }
