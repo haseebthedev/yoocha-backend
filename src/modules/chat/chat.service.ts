@@ -4,7 +4,6 @@ import { ChatRoom, ChatMessage } from './schemas';
 import { FilterQuery, PaginateModel, PaginateOptions, Types } from 'mongoose';
 import { UserService } from '../user/user.service';
 import { ChatRoomState } from './enums/room.enum';
-import { CustomError } from 'src/common/errors/api.error';
 import { ParticipantI } from 'src/interfaces';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { User } from '../user/schemas/user.schema';
@@ -18,7 +17,7 @@ export class ChatService {
     private userService: UserService,
   ) {}
 
-  async roomAlreadyExists(firstUser: Types.ObjectId | string, secondUser: Types.ObjectId | string): Promise<boolean> {
+  async roomAlreadyExists(firstUser: string, secondUser: string): Promise<boolean> {
     const room = await this.chatRoomModel.findOne({
       $and: [
         {
@@ -49,7 +48,7 @@ export class ChatService {
     }
 
     // Check if a room already exists with these participants
-    const roomAlreadyExists = await this.roomAlreadyExists(users[0], users[1]);
+    const roomAlreadyExists = await this.roomAlreadyExists(String(users[0]), String(users[1]));
     if (roomAlreadyExists) {
       throw new ConflictException(`Room already exists`);
     }
@@ -76,8 +75,6 @@ export class ChatService {
     await room.save();
     return room;
   }
-
-  async deleteRoom() {}
 
   async sendMessage(senderId: string, payload: ChatMessage) {
     const message = await this.ChatMessageModel.create({
@@ -117,13 +114,17 @@ export class ChatService {
     return await this.chatRoomModel.find({ status: ChatRoomState.ACTIVE, 'participants.user': userId }, { _id: 1 });
   }
 
-  async friendSuggestions(userId: string, users: User[]) {
+  async friendSuggestions(userId: string): Promise<User[]> {
+    // Get all users except the current user
+    const allUsers = await this.userService.findAll({ _id: { $ne: userId } });
+    
     const possibleFriends = await Promise.all(
-      users
-        .filter(async (user) => !(await this.roomAlreadyExists(userId, user._id)) ?? user)
-        .filter((user) => String(user._id) !== userId),
+      allUsers.map(async (user) => {
+        const roomExists = await this.roomAlreadyExists(userId, user._id);
+        return roomExists ? null : user;
+      }),
     );
-    return possibleFriends;
+    return possibleFriends.filter(Boolean);
   }
 
   async listUserRequests(userId: string, body: ListUserRequestsDto, paginateOptions?: PaginateOptions) {

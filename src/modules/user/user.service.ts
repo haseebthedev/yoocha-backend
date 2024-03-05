@@ -1,12 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model, PaginateModel } from 'mongoose';
+import { FilterQuery, PaginateModel, Query } from 'mongoose';
 import { SignUpDTO } from '../auth/dto';
 import { generateRandomDigits } from 'src/common/utils/common';
 import { ChangePassDTO, UpdateProfileDTO } from './dto';
-import { ChatRoom } from '../chat/schemas';
 import * as bcrypt from 'bcrypt';
+import { ParticipantType } from 'src/common/enums/user.enum';
 
 @Injectable()
 export class UserService {
@@ -46,8 +46,8 @@ export class UserService {
     return user;
   }
 
-  async findAll(): Promise<User[]> {
-    return await this.userModel.find().exec();
+  async findAll(filters?: FilterQuery<User>): Promise<User[]> {
+    return await this.userModel.find(filters ? filters : {}).exec();
   }
 
   async forgotPassword(email: string): Promise<{ result: string }> {

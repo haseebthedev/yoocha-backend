@@ -34,9 +34,9 @@ export class ChatController {
 
   @Get('friend-suggestions')
   async friendSuggestions(@GetUser('id', MongoIdValidationPipe) userId: string) {
-    const users = await this.userService.findAll();
-    const suggestions = await this.chatService.friendSuggestions(userId, users);
-    return { doc: suggestions.slice(0, 10) };
+    // const users = await this.userService.findAll();
+    const suggestions = await this.chatService.friendSuggestions(userId);
+    return { users: suggestions.slice(0, 15) };
   }
 
   @Post('list-user-requests')
