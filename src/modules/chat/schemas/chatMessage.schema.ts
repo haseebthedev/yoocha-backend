@@ -11,7 +11,7 @@ export class ChatMessage extends BaseSchema {
   @Prop({ type: Types.ObjectId, ref: 'User', default: null, _id: false })
   sender: Types.ObjectId;
 
-  @Prop({ type: String })
+  @Prop({ type: String, default: null })
   message: string;
 
   @Prop({ type: String, default: null })

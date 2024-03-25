@@ -17,89 +17,113 @@ export class ChatService {
     private userService: UserService,
   ) {}
 
-  async roomAlreadyExists(firstUser: string, secondUser: string): Promise<boolean> {
+  async roomAlreadyExists(initiatorId: string, inviteeId: string): Promise<boolean> {
+    const participants = new Set([initiatorId, inviteeId]);
+    const existingRoom = await this.chatRoomModel
+      .findOne({
+        initiator: { $in: [...participants] },
+        invitee: { $in: [...participants] },
+      })
+      .exec();
+
+    return !!existingRoom;
+  }
+
+  async createRoom(initiatorId: string, inviteeId: string) {
+    const existingRoom = await this.roomAlreadyExists(initiatorId, inviteeId);
+
+    if (existingRoom) {
+      throw new HttpException('Room already exists between these users', HttpStatus.BAD_REQUEST);
+    }
+
+    // If no room exists, create a new one
+    const newRoom = new this.chatRoomModel({ initiator: initiatorId, invitee: inviteeId });
+    return newRoom.save();
+  }
+
+  async joinRoom(roomId: string, inviteeId: string) {
+    const room = await this.chatRoomModel.findById(roomId);
+
+    if (!room) throw new NotFoundException('Chatroom not found');
+
+    if (String(room.invitee) !== inviteeId) throw new NotFoundException('User is not an invitee in this room');
+
+    room.status = ChatRoomState.ACTIVE;
+    await room.save();
+    return room;
+  }
+
+  async listUserRequests(userId: string, paginateOptions?: PaginateOptions) {
+    const query: FilterQuery<ChatRoom> = {
+      status: ChatRoomState.PENDING,
+      invitee: userId,
+    };
+    return await this.chatRoomModel.paginate(query, paginateOptions);
+  }
+
+  async listRooms(userId: string, paginateOptions?: PaginateOptions) {
+    const query: FilterQuery<ChatRoom> = {
+      status: ChatRoomState.ACTIVE,
+      $or: [{ initiator: { $eq: userId } }, { invitee: { $eq: userId } }],
+    };
+
+    return await this.chatRoomModel.paginate(query, paginateOptions);
+  }
+
+  async listBlockedUsers(userId: string, paginateOptions?: PaginateOptions) {
+    const query: FilterQuery<ChatRoom> = {
+      status: String(ChatRoomState.BLOCKED),
+      blockedBy: userId,
+    };
+
+    const result: any = await this.chatRoomModel.paginate(query, paginateOptions);
+    return result;
+  }
+
+  async blockUser(userId: string, userIdToBlock: string) {
     const room = await this.chatRoomModel.findOne({
-      $and: [
-        {
-          'participants.user': firstUser,
-          'participants.role': { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] },
-        },
-        {
-          'participants.user': secondUser,
-          'participants.role': { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] },
-        },
+      status: ChatRoomState.ACTIVE,
+      $or: [
+        { initiator: userId, invitee: userIdToBlock },
+        { initiator: userIdToBlock, invitee: userId },
       ],
     });
 
-    return !!room;
-  }
+    if (!room) throw new NotFoundException("You don't have any active chat with this user");
 
-  async createRoom(participants: ParticipantI[]) {
-    const users = participants.map((el) => el.user);
-
-    // Fetch users in parallel
-    const [user1, user2] = await Promise.all([
-      this.userService.findById(users[0].toString()),
-      this.userService.findById(users[1].toString()),
-    ]);
-
-    if (!user1 || !user2) {
-      throw new NotFoundException('One or more users not found');
-    }
-
-    // Check if a room already exists with these participants
-    const roomAlreadyExists = await this.roomAlreadyExists(String(users[0]), String(users[1]));
-    if (roomAlreadyExists) {
-      throw new ConflictException(`Room already exists`);
-    }
-
-    const room = await this.chatRoomModel.create({ participants });
-    return room;
-  }
-
-  async deleteRoom(participants: ParticipantI[]) {
-    const users = participants.map((el) => el.user);
-
-    // Fetch users in parallel
-    const [user1, user2] = await Promise.all([
-      this.userService.findById(String(users[0])),
-      this.userService.findById(String(users[1])),
-    ]);
-
-    if (!user1 || !user2) {
-      throw new NotFoundException('One or more users not found');
-    }
-
-    await this.chatRoomModel.deleteOne({
-      participants: {
-        $elemMatch: {
-          user: { $in: [String(users[0]), String(users[1])] },
-          role: { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] },
-        },
-      },
-      status: 'PENDING',
-    });
-
-    return { status: 'Deleted' };
-  }
-
-  async joinRoom(roomId: string, inviteeUserId: string) {
-    const room = await this.chatRoomModel.findById(roomId);
-
-    if (!room) throw new NotFoundException('Room not found');
-
-    // Check if the user is an INVITEE in the room
-    const isInvitee = room.participants.some(
-      (item) => item.user.toString() === inviteeUserId && item.role === ParticipantType.INVITEE,
-    );
-
-    if (!isInvitee) throw new NotFoundException('User is not an INVITEE in this room');
-
-    // Update the room status to 'ACTIVE'
-    room.status = ChatRoomState.ACTIVE;
+    room.blockedBy = userId;
+    room.status = ChatRoomState.BLOCKED;
 
     await room.save();
-    return room;
+    return { status: 'User has been blocked successfully' };
+  }
+
+  async unBlockUser(userId: string, userIdToUnblock: string) {
+    const room = await this.chatRoomModel.findOne({
+      status: ChatRoomState.BLOCKED,
+      $or: [
+        { initiator: userId, invitee: userIdToUnblock, blockedBy: userId },
+        { initiator: userIdToUnblock, invitee: userId, blockedBy: userId },
+      ],
+    });
+
+    if (!room) {
+      throw new NotFoundException('User not found or already unblocked');
+    }
+
+    room.blockedBy = null;
+    room.status = ChatRoomState.ACTIVE;
+    await room.save();
+
+    return { message: 'User has been unblocked successfully' };
+  }
+
+  async listMessages(roomId: string, paginateOptions?: PaginateOptions) {
+    const room = await this.chatRoomModel.findOne({ _id: roomId });
+    if (!room) throw new HttpException(`RoomId is invalid or doesn't exists`, HttpStatus.BAD_REQUEST);
+
+    const query: FilterQuery<ChatMessage> = { chatRoomId: roomId };
+    return await this.ChatMessageModel.paginate(query, paginateOptions);
   }
 
   async sendMessage(senderId: string, payload: ChatMessage) {
@@ -115,26 +139,7 @@ export class ChatService {
     return message;
   }
 
-  async listMessages(roomId: string, paginateOptions?: PaginateOptions) {
-    if (!roomId) {
-      throw new HttpException('RoomId is invalid or null', HttpStatus.BAD_REQUEST);
-    }
-
-    const query: FilterQuery<ChatMessage> = {
-      chatRoomId: roomId,
-    };
-
-    return await this.ChatMessageModel.paginate(query, paginateOptions);
-  }
-
-  async listRooms(userId: string, paginateOptions?: PaginateOptions) {
-    const query: FilterQuery<ChatMessage> = {
-      'participants.user': userId,
-      status: ChatRoomState.ACTIVE,
-    };
-
-    return await this.chatRoomModel.paginate(query, paginateOptions);
-  }
+  //  ABOVE CODE IS ERROR FREE AND NEW
 
   async listActiveRoomsIdsByUserId(userId: string) {
     return await this.chatRoomModel.find({ status: ChatRoomState.ACTIVE, 'participants.user': userId }, { _id: 1 });
@@ -151,92 +156,5 @@ export class ChatService {
       }),
     );
     return possibleFriends.filter(Boolean);
-  }
-
-  async listUserRequests(userId: string, body: ListUserRequestsDto, paginateOptions?: PaginateOptions) {
-    const query: FilterQuery<ChatMessage> = {
-      status: ChatRoomState.PENDING,
-      participants: {
-        $elemMatch: {
-          user: userId,
-          role: body.role,
-        },
-      },
-    };
-
-    const result: any = await this.chatRoomModel.paginate(query, paginateOptions);
-    const modifiedDocs = result.docs.map((room) => {
-      const user = room.participants.find((participant) => String(participant.user._id) !== userId).user;
-      return {
-        ...room.toObject(),
-        user: user,
-        participants: undefined,
-      };
-    });
-
-    result.docs = modifiedDocs;
-    return result;
-  }
-
-  async listBlockedUsers(userId: string, paginateOptions?: PaginateOptions) {
-    const query: FilterQuery<ChatRoom> = {
-      status: String(ChatRoomState.BLOCKED),
-      blockedBy: userId,
-    };
-
-    const result: any = await this.chatRoomModel.paginate(query, paginateOptions);
-    const modifiedDocs = result.docs.map((room) => {
-      const user = room.participants.find((participant) => String(participant.user._id) !== userId).user;
-      return {
-        ...room.toObject(),
-        user: user,
-        participants: undefined,
-      };
-    });
-
-    result.docs = modifiedDocs;
-    return result;
-  }
-
-  async blockUser(userId: string, userIdToBlock: string) {
-    const room = await this.chatRoomModel.findOne({
-      status: ChatRoomState.ACTIVE,
-      participants: {
-        $elemMatch: { user: userIdToBlock, role: { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] } },
-      },
-    });
-
-    if (!room) {
-      throw new NotFoundException("You don't have any active chat with this user");
-    }
-
-    if (room.status === ChatRoomState.BLOCKED) {
-      throw new ConflictException('This user is already blocked');
-    }
-
-    room.blockedBy = userId;
-    room.status = ChatRoomState.BLOCKED;
-    await room.save();
-
-    return { message: 'User has been blocked successfully' };
-  }
-
-  async unBlockUser(userId: string, userIdToBlock: string) {
-    const room = await this.chatRoomModel.findOne({
-      status: ChatRoomState.BLOCKED,
-      participants: {
-        $elemMatch: { user: userIdToBlock, role: { $in: [ParticipantType.INITIATOR, ParticipantType.INVITEE] } },
-      },
-    });
-
-    if (!room) {
-      throw new NotFoundException('User not found or already unblocked');
-    }
-
-    room.blockedBy = null;
-    room.status = ChatRoomState.ACTIVE;
-    await room.save();
-
-    return { message: 'User has been unblocked successfully' };
   }
 }

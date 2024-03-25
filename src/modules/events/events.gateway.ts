@@ -26,23 +26,23 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: Socket) {
     console.log('client connected: ', client.id);
 
-    const token = client.handshake.headers['authorization'];
+    // const token = client.handshake.headers['authorization'];
 
-    if (token) {
-      let decodedUser = await this.authService.verifyToken(token);
-      const userActiveRooms = await this.chatService.listActiveRoomsIdsByUserId(decodedUser.sub);
-      const userActiveRoomsIds = userActiveRooms.map((el) => el._id.toString());
+    // if (token) {
+    //   let decodedUser = await this.authService.verifyToken(token);
+    //   const userActiveRooms = await this.chatService.listActiveRoomsIdsByUserId(decodedUser.sub);
+    //   const userActiveRoomsIds = userActiveRooms.map((el) => el._id.toString());
 
-      await Promise.all(
-        userActiveRoomsIds.map(async (roomId) => {
-          // Check if the user is not already joined to the room
-          if (!client.rooms.has(roomId)) {
-            await client.join(roomId);
-            console.log(`Client joined room: ${roomId}`);
-          }
-        }),
-      );
-    }
+    //   await Promise.all(
+    //     userActiveRoomsIds.map(async (roomId) => {
+    //       // Check if the user is not already joined to the room
+    //       if (!client.rooms.has(roomId)) {
+    //         await client.join(roomId);
+    //         console.log(`Client joined room: ${roomId}`);
+    //       }
+    //     }),
+    //   );
+    // }
   }
 
   handleDisconnect(client: Socket) {
@@ -58,30 +58,30 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`Client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage(Events.SEND_FRIEND_REQUEST)
-  async onSendFriendRequest(client: Socket, payload: { participants: ParticipantI[] }) {
-    console.log('payload :--: ', payload);
+  // @SubscribeMessage(Events.SEND_FRIEND_REQUEST)
+  // async onSendFriendRequest(client: Socket, payload: { participants: ParticipantI[] }) {
+  //   console.log('payload :--: ', payload);
 
-    await this.chatService.createRoom(payload.participants);
-  }
+  //   await this.chatService.createRoom(payload.participants);
+  // }
 
-  @SubscribeMessage(Events.CANCEL_FRIEND_REQUEST)
-  async onCancelFriendRequest(client: Socket, payload: { participants: ParticipantI[] }) {
-    await this.chatService.deleteRoom(payload.participants);
-  }
+  // @SubscribeMessage(Events.CANCEL_FRIEND_REQUEST)
+  // async onCancelFriendRequest(client: Socket, payload: { participants: ParticipantI[] }) {
+  //   await this.chatService.deleteRoom(payload.participants);
+  // }
 
-  @SubscribeMessage(Events.JOIN_ROOM)
-  async onJoinRoom(client: Socket, payload: { roomId: string; inviteeId: string }) {
-    console.log('payload :--: ', payload);
+  // @SubscribeMessage(Events.JOIN_ROOM)
+  // async onJoinRoom(client: Socket, payload: { roomId: string; inviteeId: string }) {
+  //   console.log('payload :--: ', payload);
 
-    await this.chatService.joinRoom(payload.roomId, payload.inviteeId);
-  }
+  //   await this.chatService.joinRoom(payload.roomId, payload.inviteeId);
+  // }
 
-  @SubscribeMessage(Events.SEND_MESSAGE)
-  async onSendMessage(client: Socket, payload: ChatMessageDocument) {
-    const messageResult: any = await this.chatService.sendMessage(String(payload.sender), payload);
-    const {password, isEmailVerified, authCode, ...senderInfo} = await this.userService.findById(String(messageResult.sender))
-    messageResult.sender = senderInfo 
-    this.server.to(String(payload.chatRoomId)).emit(Events.RECEIVE_MESSAGE, { ...messageResult });
-  }
+  // @SubscribeMessage(Events.SEND_MESSAGE)
+  // async onSendMessage(client: Socket, payload: ChatMessageDocument) {
+  //   const messageResult: any = await this.chatService.sendMessage(String(payload.sender), payload);
+  //   const {password, isEmailVerified, authCode, ...senderInfo} = await this.userService.findById(String(messageResult.sender))
+  //   messageResult.sender = senderInfo 
+  //   this.server.to(String(payload.chatRoomId)).emit(Events.RECEIVE_MESSAGE, { ...messageResult });
+  // }
 }

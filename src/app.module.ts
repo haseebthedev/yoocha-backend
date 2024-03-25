@@ -10,7 +10,7 @@ import { ObjectIdInterceptor, ResultInterceptor } from './common/interceptors';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
-    MongooseModule.forRoot(process.env.MONGO_URL),
+    MongooseModule.forRoot(process.env.MONGO_LOCAL_URL),
     AuthModule,
     UserModule,
     EventsModule,
