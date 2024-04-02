@@ -14,9 +14,6 @@ export class ChatMessage extends BaseSchema {
   @Prop({ type: String, default: null })
   message: string;
 
-  @Prop({ type: String, default: null })
-  link: string;
-
   @Prop({ type: Array<string>, default: null })
   files: string[];
 }

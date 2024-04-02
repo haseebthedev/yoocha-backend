@@ -1,16 +1,17 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { FilterQuery, PaginateModel, Query } from 'mongoose';
+import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
 import { SignUpDTO } from '../auth/dto';
 import { generateRandomDigits } from 'src/common/utils/common';
 import { ChangePassDTO, UpdateProfileDTO } from './dto';
 import * as bcrypt from 'bcrypt';
-import { ParticipantType } from 'src/common/enums/user.enum';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: PaginateModel<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: PaginateModel<User>,
+  ) {}
 
   async create(dto: SignUpDTO): Promise<User> {
     const userInDB = await this.userModel.findOne({ email: dto.email });
@@ -20,6 +21,10 @@ export class UserService {
 
     const user = new this.userModel(dto);
     return user.save();
+  }
+
+  async find(query: FilterQuery<User>, paginateOptions?: PaginateOptions) {
+    return await this.userModel.paginate(query, paginateOptions);
   }
 
   async findByEmail(email: string): Promise<User | null> {

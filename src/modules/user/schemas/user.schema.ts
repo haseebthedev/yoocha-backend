@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
 import { HydratedDocument } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
+import * as Paginate from 'mongoose-paginate-v2';
 import * as bcrypt from 'bcrypt';
 
 @Schema()
@@ -62,3 +63,5 @@ UserSchema.pre('save', async function (next) {
   }
   next();
 });
+
+UserSchema.plugin(Paginate);

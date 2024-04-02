@@ -4,6 +4,8 @@ import { JwtAuthGuard } from '../auth/guards';
 import { GetUser } from 'src/common/decorators';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 import { UserService } from '../user/user.service';
+import { SendMessagePayloadDto } from './dto';
+import { ParticipantType } from 'src/common/enums/user.enum';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -41,8 +43,9 @@ export class ChatController {
     @GetUser('id', MongoIdValidationPipe) userId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Body('type') type: keyof typeof ParticipantType,
   ) {
-    return await this.chatService.listUserRequests(userId, { page, limit });
+    return await this.chatService.listUserRequests(userId, type, { page, limit });
   }
 
   @Post('list-rooms')
@@ -88,29 +91,24 @@ export class ChatController {
     return await this.chatService.listMessages(roomId, { page, limit, populate: 'sender' });
   }
 
+  @Post('send-message')
+  async sendMessage(
+    @GetUser('id', MongoIdValidationPipe) userId: string,
+    @Body('roomId', MongoIdValidationPipe) roomId: string,
+    @Body('payload') payload: SendMessagePayloadDto,
+  ) {
+    return await this.chatService.sendMessage(roomId, userId, payload);
+  }
+
+  @Get('friend-suggestions')
+  async friendSuggestions(
+    @GetUser('id', MongoIdValidationPipe) userId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return await this.chatService.friendSuggestion(userId, {page, limit});
+  }
+
   //  -----------------------------------------------------
-
-  // @Get('friend-suggestions')
-  // async friendSuggestions(@GetUser('id', MongoIdValidationPipe) userId: string) {
-  //   // const users = await this.userService.findAll();
-  //   const suggestions = await this.chatService.friendSuggestions(userId);
-  //   return { users: suggestions.slice(0, 15) };
-  // }
-
-  // @Get('list-blocked-users')
-  // async listBlockedUsers(
-  //   @GetUser('id', MongoIdValidationPipe) userId: string,
-  //   @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-  //   @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-  // ) {
-  //   return await this.chatService.listBlockedUsers(userId, { page, limit, populate: 'participants.user' });
-  // }
-
-  // @Patch('unblock-user')
-  // async unBlockUser(
-  //   @GetUser('id', MongoIdValidationPipe) userId: string,
-  //   @Query('id', MongoIdValidationPipe) userIdToBlock: string,
-  // ) {
-  //   return await this.chatService.unBlockUser(userId, userIdToBlock);
-  // }
+  // explore-people
 }

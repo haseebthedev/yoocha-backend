@@ -1,13 +1,12 @@
-import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ChatRoom, ChatMessage } from './schemas';
-import { FilterQuery, PaginateModel, PaginateOptions, Types } from 'mongoose';
+import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
 import { UserService } from '../user/user.service';
 import { ChatRoomState } from './enums/room.enum';
-import { ParticipantI } from 'src/interfaces';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { User } from '../user/schemas/user.schema';
-import { ListUserRequestsDto } from './dto';
+import { SendMessagePayloadDto } from './dto';
 
 @Injectable()
 export class ChatService {
@@ -53,11 +52,17 @@ export class ChatService {
     return room;
   }
 
-  async listUserRequests(userId: string, paginateOptions?: PaginateOptions) {
-    const query: FilterQuery<ChatRoom> = {
-      status: ChatRoomState.PENDING,
-      invitee: userId,
-    };
+  async listUserRequests(userId: string, type: keyof typeof ParticipantType, paginateOptions?: PaginateOptions) {
+    const query: FilterQuery<ChatRoom> = { status: ChatRoomState.PENDING };
+
+    if (type === ParticipantType.INITIATOR) {
+      query.initiator = userId;
+    }
+
+    if (type === ParticipantType.INVITEE) {
+      query.invitee = userId;
+    }
+
     return await this.chatRoomModel.paginate(query, paginateOptions);
   }
 
@@ -76,8 +81,7 @@ export class ChatService {
       blockedBy: userId,
     };
 
-    const result: any = await this.chatRoomModel.paginate(query, paginateOptions);
-    return result;
+    return await this.chatRoomModel.paginate(query, paginateOptions);
   }
 
   async blockUser(userId: string, userIdToBlock: string) {
@@ -126,35 +130,54 @@ export class ChatService {
     return await this.ChatMessageModel.paginate(query, paginateOptions);
   }
 
-  async sendMessage(senderId: string, payload: ChatMessage) {
+  async sendMessage(roomId: string, senderId: string, payload: SendMessagePayloadDto) {
     const message = await this.ChatMessageModel.create({
+      chatRoomId: roomId,
       sender: senderId,
-      chatRoomId: payload.chatRoomId,
-      files: payload.files,
-      link: payload.files,
-      message: payload.message,
+      files: payload?.files,
+      message: payload?.message,
     });
 
     await message.save();
     return message;
   }
 
+  async friendSuggestion(userId: string, paginateOptions?: PaginateOptions) {
+    // Find user's friends
+    const userFriends = await this.chatRoomModel
+      .find({
+        $or: [{ initiator: userId }, { invitee: userId }],
+        status: ChatRoomState.ACTIVE,
+      })
+      .select('initiator invitee');
+
+    const friendsIds = userFriends.map((friendship) =>
+      friendship.initiator === userId ? friendship.invitee : friendship.initiator,
+    );
+
+    // Find friends of friends
+    const friendsOfFriends = await this.chatRoomModel
+      .find({
+        $or: [{ initiator: { $in: friendsIds } }, { invitee: { $in: friendsIds } }],
+        status: ChatRoomState.ACTIVE,
+      })
+      .select('initiator invitee');
+
+    const suggestedFriendsIds = friendsOfFriends.reduce((acc, friendship) => {
+      const friendId = friendship.initiator == userId ? friendship.invitee : friendship.initiator;
+      if (!friendsIds.includes(friendId) && friendId != userId) {
+        acc.add(friendId);
+      }
+      return acc;
+    }, new Set());
+
+    // Fetch user details of suggested friends
+    return await this.userService.find({ _id: { $in: Array.from(suggestedFriendsIds) } }, paginateOptions);
+  }
+
   //  ABOVE CODE IS ERROR FREE AND NEW
 
   async listActiveRoomsIdsByUserId(userId: string) {
     return await this.chatRoomModel.find({ status: ChatRoomState.ACTIVE, 'participants.user': userId }, { _id: 1 });
-  }
-
-  async friendSuggestions(userId: string): Promise<User[]> {
-    // Get all users except the current user
-    const allUsers = await this.userService.findAll({ _id: { $ne: userId } });
-
-    const possibleFriends = await Promise.all(
-      allUsers.map(async (user) => {
-        const roomExists = await this.roomAlreadyExists(userId, user._id);
-        return roomExists ? null : user;
-      }),
-    );
-    return possibleFriends.filter(Boolean);
   }
 }
