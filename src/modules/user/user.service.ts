@@ -1,10 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
+import { generateRandomDigits } from 'src/common/utils/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
-import { SignUpDTO } from '../auth/dto';
-import { generateRandomDigits } from 'src/common/utils/common';
 import { ChangePassDTO, UpdateProfileDTO } from './dto';
+import { SignUpDTO } from '../auth/dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()

@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
-import * as Paginate from 'mongoose-paginate-v2';
 import { ChatRoomState } from '../enums/room.enum';
+import * as Paginate from 'mongoose-paginate-v2';
 
 @Schema()
 export class ChatRoom extends BaseSchema {

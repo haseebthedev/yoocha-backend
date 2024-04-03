@@ -1,12 +1,11 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { ChatRoom, ChatMessage } from './schemas';
 import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { ParticipantType } from 'src/common/enums/user.enum';
 import { UserService } from '../user/user.service';
 import { ChatRoomState } from './enums/room.enum';
-import { ParticipantType } from 'src/common/enums/user.enum';
-import { User } from '../user/schemas/user.schema';
 import { SendMessagePayloadDto } from './dto';
+import { ChatRoom, ChatMessage } from './schemas';
 
 @Injectable()
 export class ChatService {
