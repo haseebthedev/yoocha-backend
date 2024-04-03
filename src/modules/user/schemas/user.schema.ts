@@ -40,6 +40,10 @@ export class User extends BaseSchema {
 
   @Prop({ default: null })
   @IsNotEmpty()
+  city: string;
+
+  @Prop({ default: null })
+  @IsNotEmpty()
   country: string;
 }
 

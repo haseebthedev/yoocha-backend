@@ -141,7 +141,7 @@ export class ChatService {
     return message;
   }
 
-  async friendSuggestion(userId: string, paginateOptions?: PaginateOptions) {
+  async friendSuggestions(userId: string, paginateOptions?: PaginateOptions) {
     // Find user's friends
     const userFriends = await this.chatRoomModel
       .find({
@@ -172,6 +172,45 @@ export class ChatService {
 
     // Fetch user details of suggested friends
     return await this.userService.find({ _id: { $in: Array.from(suggestedFriendsIds) } }, paginateOptions);
+  }
+
+  async explorePeople(userId: string, paginateOptions?: PaginateOptions) {
+    const userInfo = await this.userService.findById(userId);
+
+    // Find user's friends
+    const userFriends = await this.chatRoomModel
+      .find({
+        $or: [{ initiator: userId }, { invitee: userId }],
+        status: ChatRoomState.ACTIVE,
+      })
+      .select('initiator invitee');
+
+    const friendsIds = userFriends.map((friendship) => {
+      return friendship.initiator == userId ? friendship.invitee : friendship.initiator;
+    });
+
+    // Find friends of friends
+    const friendsOfFriends = await this.chatRoomModel
+      .find({
+        $or: [{ initiator: { $in: friendsIds } }, { invitee: { $in: friendsIds } }],
+        status: ChatRoomState.ACTIVE,
+      })
+      .select('initiator invitee');
+
+    const suggestedFriendsIds = friendsOfFriends.reduce((acc, friendship) => {
+      const friendId = friendship.initiator == userId ? friendship.invitee : friendship.initiator;
+      acc.add(friendId);
+      return acc;
+    }, new Set());
+
+    // Add current user's ID to exclude from suggestions
+    suggestedFriendsIds.add(userId);
+
+    // Fetch users who are not in the current user's friends list or friends of friends,
+    // and are in the same country
+    return await this.userService.find({
+      $and: [{ _id: { $nin: Array.from(suggestedFriendsIds) } }, { city: userInfo.city, country: userInfo.country }],
+    });
   }
 
   //  ABOVE CODE IS ERROR FREE AND NEW

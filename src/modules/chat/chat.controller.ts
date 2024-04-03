@@ -1,11 +1,11 @@
 import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ChatService } from './chat.service';
-import { JwtAuthGuard } from '../auth/guards';
-import { GetUser } from 'src/common/decorators';
+import { ParticipantType } from 'src/common/enums/user.enum';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 import { UserService } from '../user/user.service';
+import { GetUser } from 'src/common/decorators';
 import { SendMessagePayloadDto } from './dto';
-import { ParticipantType } from 'src/common/enums/user.enum';
+import { ChatService } from './chat.service';
+import { JwtAuthGuard } from '../auth/guards';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -106,9 +106,15 @@ export class ChatController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return await this.chatService.friendSuggestion(userId, {page, limit});
+    return await this.chatService.friendSuggestions(userId, { page, limit });
   }
 
-  //  -----------------------------------------------------
-  // explore-people
+  @Get('explore-people')
+  async explorePeople(
+    @GetUser('id', MongoIdValidationPipe) userId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return await this.chatService.explorePeople(userId, { page, limit });
+  }
 }
