@@ -54,7 +54,7 @@ export class ChatController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return await this.chatService.listRooms(userId, { page, limit });
+    return await this.chatService.listRooms(userId, { page, limit, populate: 'initiator invitee' });
   }
 
   @Get('list-blocked-users')
