@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "6bec290e-2f36-4d49-a184-788bc72db816",
+		"_postman_id": "14a4053e-b867-4f3e-9482-fb3200ce6e32",
 		"name": "Yoocha",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "10799584"
@@ -45,7 +45,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"haseeb@gmail.com\",\n    \"password\": \"1234\"\n}",
+							"raw": "{\n    \"email\": \"haseeb@gmail.com\",\n    \"password\": \"Test@1234\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -83,7 +83,8 @@
 									"    pm.environment.set('token', token);",
 									"}"
 								],
-								"type": "text/javascript"
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -95,7 +96,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstname\": \"Muhammad\",\n    \"lastname\": \"Ahmed\",\n    \"email\": \"ahmed@gmail.com\",\n    \"password\": \"1234\"\n}",
+							"raw": "{\n    \"firstname\": \"Luis\",\n    \"lastname\": \"Martin\",\n    \"email\": \"luis@gmail.com\",\n    \"password\": \"Test@1234\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -262,11 +263,11 @@
 								}
 							]
 						},
-						"method": "POST",
+						"method": "PATCH",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstname\": \"Sadia\"\n}",
+							"raw": "{\n    \"country\": \"Pakistan\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -309,7 +310,7 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3333/chat/list-rooms",
+							"raw": "http://localhost:3333/chat/list-rooms?page=1&limit=10",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -318,6 +319,221 @@
 							"path": [
 								"chat",
 								"list-rooms"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "Authorization",
+									"value": "Bearer {{token}}",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roomId\": \"6601a2ccd4ba876131144a57\",\n    \"payload\": {\n        \"message\": \"Hello World\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3333/chat/send-message",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"send-message"
+							],
+							"query": [
+								{
+									"key": "Authorization",
+									"value": "Bearer {{token}}",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Friend Request",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3333/chat/send-friend-req?inviteeId=65c0bbfbd36daa8c2015cbcc",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"send-friend-req"
+							],
+							"query": [
+								{
+									"key": "inviteeId",
+									"value": "65c0bbfbd36daa8c2015cbcc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Accept Friend Request",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3333/chat/accept-friend-req?inviteeId=65c4ff8b6aaf36d648b8b10e",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"accept-friend-req"
+							],
+							"query": [
+								{
+									"key": "inviteeId",
+									"value": "65c4ff8b6aaf36d648b8b10e"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Blocked Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3333/chat/list-blocked-users?page=1&limit=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"list-blocked-users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List User Requests",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"INVITEE\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3333/chat/list-user-requests",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"list-user-requests"
 							],
 							"query": [
 								{
@@ -346,7 +562,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:3333/chat/friend-suggestions",
+							"raw": "http://localhost:3333/chat/friend-suggestions?page=1&limit=10",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -358,9 +574,52 @@
 							],
 							"query": [
 								{
-									"key": "Authorization",
-									"value": "Bearer {{token}}",
-									"disabled": true
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Explore People",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3333/chat/explore-people?page=1&limit=10",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"explore-people"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
 								}
 							]
 						}
@@ -384,7 +643,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"roomId\": \"65c2673ce3716a74524e801a\"\n}",
+							"raw": "{\n    \"roomId\": \"6601a2ccd4ba876131144a57\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -392,7 +651,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:3333/chat/list-messages?page=1&limit=10",
+							"raw": "http://localhost:3333/chat/list-messages?page=1&limit=15",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -409,7 +668,88 @@
 								},
 								{
 									"key": "limit",
-									"value": "10"
+									"value": "15"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Block a User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roomId\": \"65c500986aaf36d648b8b121\",\n    \"userId\": \"Here_comes_the_user_id\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3333/chat/block-user?id=6601a08ea1588b1016b19bfa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"block-user"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "6601a08ea1588b1016b19bfa"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unblock a User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3333/chat/unblock-user?id=6601a08ea1588b1016b19bfa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3333",
+							"path": [
+								"chat",
+								"unblock-user"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "6601a08ea1588b1016b19bfa"
 								}
 							]
 						}
