@@ -51,6 +51,22 @@ export class ChatService {
     return room;
   }
 
+  async deleteRoom(initiatorId: string, inviteeId: string) {
+    const roomToDelete = await this.chatRoomModel
+      .findOneAndDelete({
+        status: ChatRoomState.PENDING,
+        initiator: initiatorId,
+        invitee: inviteeId,
+      })
+      .exec();
+
+    if (!roomToDelete) {
+      throw new HttpException(`You haven't send request to this user `, HttpStatus.NOT_FOUND);
+    }
+
+    return roomToDelete;
+  }
+
   async listUserRequests(userId: string, type: keyof typeof ParticipantType, paginateOptions?: PaginateOptions) {
     const query: FilterQuery<ChatRoom> = { status: ChatRoomState.PENDING };
 
@@ -138,7 +154,7 @@ export class ChatService {
     });
 
     await message.save();
-    await message.populate('sender')
+    await message.populate('sender');
     return message;
   }
 

@@ -1,4 +1,16 @@
-import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Get,
+  HttpException,
+  HttpStatus,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 import { UserService } from '../user/user.service';
@@ -35,6 +47,17 @@ export class ChatController {
 
     if (requestAccepted) {
       return { status: 'User request accepted successfully' };
+    }
+  }
+
+  @Get('cancel-friend-req')
+  async cancelFriendReq(
+    @GetUser('id', MongoIdValidationPipe) initiatorId: string,
+    @Query('inviteeId', MongoIdValidationPipe) inviteeId: string,
+  ) {
+    const deletedRoom = await this.chatService.deleteRoom(initiatorId, inviteeId);
+    if (deletedRoom) {
+      return { status: 'User request cancelled successfully' };
     }
   }
 
