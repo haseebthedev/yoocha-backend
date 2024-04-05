@@ -138,6 +138,7 @@ export class ChatService {
     });
 
     await message.save();
+    await message.populate('sender')
     return message;
   }
 

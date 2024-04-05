@@ -45,7 +45,7 @@ export class ChatController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Body('type') type: keyof typeof ParticipantType,
   ) {
-    return await this.chatService.listUserRequests(userId, type, { page, limit });
+    return await this.chatService.listUserRequests(userId, type, { page, limit, populate: 'initiator invitee' });
   }
 
   @Post('list-rooms')
@@ -63,7 +63,7 @@ export class ChatController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return await this.chatService.listBlockedUsers(userId, { page, limit });
+    return await this.chatService.listBlockedUsers(userId, { page, limit, populate: 'initiator invitee' });
   }
 
   @Patch('block-user')
