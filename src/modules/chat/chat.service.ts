@@ -54,7 +54,6 @@ export class ChatService {
   async deleteRoom(initiatorId: string, inviteeId: string) {
     const roomToDelete = await this.chatRoomModel
       .findOneAndDelete({
-        status: ChatRoomState.PENDING,
         initiator: initiatorId,
         invitee: inviteeId,
       })
