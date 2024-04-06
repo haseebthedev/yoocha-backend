@@ -61,7 +61,7 @@ export class ChatController {
     }
   }
 
-  @Get('list-user-requests')
+  @Post('list-user-requests')
   async listUserRequests(
     @GetUser('id', MongoIdValidationPipe) userId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
