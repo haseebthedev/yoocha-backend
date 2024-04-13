@@ -245,10 +245,4 @@ export class ChatService {
       paginateOptions,
     );
   }
-
-  //  ABOVE CODE IS ERROR FREE AND NEW
-
-  async listActiveRoomsIdsByUserId(userId: string) {
-    return await this.chatRoomModel.find({ status: ChatRoomState.ACTIVE, 'participants.user': userId }, { _id: 1 });
-  }
 }
