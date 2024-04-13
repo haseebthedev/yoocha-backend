@@ -6,6 +6,8 @@ import { UserModule } from './modules/user/user.module';
 import { EventsModule } from './modules/events/events.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ObjectIdInterceptor, ResultInterceptor } from './common/interceptors';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { FileModule } from './modules/file/file.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { ObjectIdInterceptor, ResultInterceptor } from './common/interceptors';
     AuthModule,
     UserModule,
     EventsModule,
+    CloudinaryModule,
+    FileModule,
   ],
   providers: [
     {
