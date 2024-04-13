@@ -196,8 +196,13 @@ export class ChatService {
     // Find user's friends
     const userFriends = await this.chatRoomModel
       .find({
-        $or: [{ initiator: userId }, { invitee: userId }],
-        status: ChatRoomState.ACTIVE,
+        $or: [
+          { initiator: userId },
+          { invitee: userId },
+          { status: ChatRoomState.ACTIVE },
+          { status: ChatRoomState.PENDING },
+          { status: ChatRoomState.BLOCKED },
+        ],
       })
       .select('initiator invitee');
 
@@ -208,8 +213,13 @@ export class ChatService {
     // Find friends of friends
     const friendsOfFriends = await this.chatRoomModel
       .find({
-        $or: [{ initiator: { $in: friendsIds } }, { invitee: { $in: friendsIds } }],
-        status: ChatRoomState.ACTIVE,
+        $or: [
+          { initiator: { $in: friendsIds } },
+          { invitee: { $in: friendsIds } },
+          { status: ChatRoomState.ACTIVE },
+          { status: ChatRoomState.PENDING },
+          { status: ChatRoomState.BLOCKED },
+        ],
       })
       .select('initiator invitee');
 
@@ -224,9 +234,16 @@ export class ChatService {
 
     // Fetch users who are not in the current user's friends list or friends of friends,
     // and are in the same country
-    return await this.userService.find({
-      $and: [{ _id: { $nin: Array.from(suggestedFriendsIds) } }, { city: userInfo.city, country: userInfo.country }],
-    }, paginateOptions);
+    return await this.userService.find(
+      {
+        $and: [
+          { _id: { $nin: Array.from(suggestedFriendsIds) } },
+          { _id: { $nin: friendsIds } },
+          { city: userInfo.city, country: userInfo.country },
+        ],
+      },
+      paginateOptions,
+    );
   }
 
   //  ABOVE CODE IS ERROR FREE AND NEW
