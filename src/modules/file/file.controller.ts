@@ -1,8 +1,10 @@
 import {
   Controller,
+  Delete,
   MaxFileSizeValidator,
   ParseFilePipe,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -27,5 +29,10 @@ export class FileController {
     file: Express.Multer.File,
   ) {
     return await this.fileService.uploadFile(file);
+  }
+
+  @Delete('delete')
+  async deleteFile(@Query('publicId') publicId: string) {
+    return await this.fileService.deleteFile(publicId);
   }
 }
