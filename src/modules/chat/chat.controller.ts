@@ -1,16 +1,4 @@
-import {
-  Body,
-  Controller,
-  DefaultValuePipe,
-  Get,
-  HttpException,
-  HttpStatus,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 import { UserService } from '../user/user.service';

@@ -226,7 +226,7 @@ export class ChatService {
     // and are in the same country
     return await this.userService.find({
       $and: [{ _id: { $nin: Array.from(suggestedFriendsIds) } }, { city: userInfo.city, country: userInfo.country }],
-    });
+    }, paginateOptions);
   }
 
   //  ABOVE CODE IS ERROR FREE AND NEW
