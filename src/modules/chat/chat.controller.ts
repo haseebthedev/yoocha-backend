@@ -99,7 +99,7 @@ export class ChatController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return await this.chatService.listMessages(roomId, { page, limit, populate: 'sender' });
+    return await this.chatService.listMessages(roomId, { page, limit, populate: 'sender', sort: { createdAt: -1 } });
   }
 
   @Post('send-message')

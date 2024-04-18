@@ -45,7 +45,6 @@ export class AuthService {
 
   async signin(dto: SignInDTO): Promise<{ user: User; token: string }> {
     const user = await this.userService.findByEmail(dto.email);
-
     const isMatch = await bcrypt.compare(dto.password, user.password);
     if (!isMatch) {
       throw new UnauthorizedException('Either email or password is invalid');

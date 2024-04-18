@@ -12,37 +12,39 @@ import { ChatMessageDocument } from '../chat/schemas';
 import { ParticipantI } from 'src/interfaces';
 import { AuthService } from '../auth/auth.service';
 import { UserService } from '../user/user.service';
+import { Inject, forwardRef } from '@nestjs/common';
 
 @WebSocketGateway(parseInt(process.env.PORT), { namespace: 'events' })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
-    private chatService: ChatService,
+    @Inject(forwardRef(() => ChatService))
+    private readonly chatService: ChatService,
+
     private authService: AuthService,
     private userService: UserService,
   ) {}
 
-  @WebSocketServer() server: Server;
+  @WebSocketServer() public server: Server;
 
   async handleConnection(client: Socket) {
-    console.log('client connected: ', client.id);
+    // Join the client to a room identified by its roomId
+    // console.log('client connected: ', client.id);
+    const token = client.handshake.headers['authorization'];
 
-    // const token = client.handshake.headers['authorization'];
+    if (token) {
+      let decodedUser = await this.authService.verifyToken(token);
+      const userActiveRoomsIds = await this.chatService.listActiveRoomsIdsByUserId(decodedUser.sub);
 
-    // if (token) {
-    //   let decodedUser = await this.authService.verifyToken(token);
-    //   const userActiveRooms = await this.chatService.listActiveRoomsIdsByUserId(decodedUser.sub);
-    //   const userActiveRoomsIds = userActiveRooms.map((el) => el._id.toString());
-
-    //   await Promise.all(
-    //     userActiveRoomsIds.map(async (roomId) => {
-    //       // Check if the user is not already joined to the room
-    //       if (!client.rooms.has(roomId)) {
-    //         await client.join(roomId);
-    //         console.log(`Client joined room: ${roomId}`);
-    //       }
-    //     }),
-    //   );
-    // }
+      await Promise.all(
+        userActiveRoomsIds.map(async (roomId) => {
+          // Check if the user is not already joined to the room
+          if (!client.rooms.has(roomId)) {
+            await client.join(roomId);
+          }
+        }),
+      );
+      console.log(`Client joined: `, client.id);
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -81,7 +83,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // async onSendMessage(client: Socket, payload: ChatMessageDocument) {
   //   const messageResult: any = await this.chatService.sendMessage(String(payload.sender), payload);
   //   const {password, isEmailVerified, authCode, ...senderInfo} = await this.userService.findById(String(messageResult.sender))
-  //   messageResult.sender = senderInfo 
+  //   messageResult.sender = senderInfo
   //   this.server.to(String(payload.chatRoomId)).emit(Events.RECEIVE_MESSAGE, { ...messageResult });
   // }
 }

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ParticipantType } from 'src/common/enums/user.enum';
@@ -6,6 +6,8 @@ import { UserService } from '../user/user.service';
 import { ChatRoomState } from './enums/room.enum';
 import { SendMessagePayloadDto } from './dto';
 import { ChatRoom, ChatMessage } from './schemas';
+import { EventsGateway } from '../events/events.gateway';
+import { Events } from '../events/enums';
 
 @Injectable()
 export class ChatService {
@@ -13,6 +15,9 @@ export class ChatService {
     @InjectModel(ChatRoom.name) private chatRoomModel: PaginateModel<ChatRoom>,
     @InjectModel(ChatMessage.name) private ChatMessageModel: PaginateModel<ChatMessage>,
     private userService: UserService,
+
+    @Inject(forwardRef(() => EventsGateway))
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async roomAlreadyExists(initiatorId: string, inviteeId: string): Promise<boolean> {
@@ -154,6 +159,11 @@ export class ChatService {
 
     await message.save();
     await message.populate('sender');
+
+    // sending this event to server
+    this.eventsGateway.server.to(String(roomId)).emit(Events.RECEIVE_MESSAGE, { ...message });
+    // this.eventsGateway.server.emit(Events.RECEIVE_MESSAGE, { ...message });
+
     return message;
   }
 
@@ -244,5 +254,15 @@ export class ChatService {
       },
       paginateOptions,
     );
+  }
+
+  async listActiveRoomsIdsByUserId(userId: string): Promise<string[]> {
+    const activeRooms = await this.chatRoomModel
+      .find({
+        status: ChatRoomState.ACTIVE,
+        $or: [{ initiator: userId }, { invitee: userId }],
+      })
+      .select('_id');
+    return activeRooms.map((room) => room._id.toString());
   }
 }

@@ -8,6 +8,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ObjectIdInterceptor, ResultInterceptor } from './common/interceptors';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { FileModule } from './modules/file/file.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { FileModule } from './modules/file/file.module';
     MongooseModule.forRoot(process.env.MONGO_LOCAL_URL),
     AuthModule,
     UserModule,
+    ChatModule,
     EventsModule,
     CloudinaryModule,
     FileModule,
