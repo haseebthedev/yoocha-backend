@@ -17,6 +17,9 @@ export class ChatRoom extends BaseSchema {
 
   @Prop({ type: Types.ObjectId, ref: 'User', default: null, required: false })
   blockedBy: string
+
+  @Prop({ type: String, default: null })
+  lastMessage: string;
 }
 
 export type ChatRoomDocument = HydratedDocument<ChatRoom>;

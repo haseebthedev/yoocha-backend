@@ -164,6 +164,10 @@ export class ChatService {
     this.eventsGateway.server.to(String(roomId)).emit(Events.RECEIVE_MESSAGE, { ...message });
     // this.eventsGateway.server.emit(Events.RECEIVE_MESSAGE, { ...message });
 
+    if (payload?.message) {
+      await this.chatRoomModel.findByIdAndUpdate(roomId, {lastMessage: payload.message})
+    }
+
     return message;
   }
 
