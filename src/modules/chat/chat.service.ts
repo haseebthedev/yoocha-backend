@@ -217,15 +217,12 @@ export class ChatService {
     const userFriends = await this.chatRoomModel
       .find({
         $or: [{ initiator: userId }, { invitee: userId }],
-        status: ChatRoomState.ACTIVE,
       })
       .select('initiator invitee');
 
     const friendsIds = userFriends.map((friendship) =>
       friendship.initiator === userId ? friendship.invitee : friendship.initiator,
     );
-
-    console.log('friendsIds === ', friendsIds);
 
     // Find friends of friends
     const friendsOfFriends = await this.chatRoomModel
@@ -234,15 +231,11 @@ export class ChatService {
       })
       .select('initiator invitee');
 
-    console.log('friendsOfFriends === ', friendsOfFriends);
-
     const suggestedFriendsIds = friendsOfFriends.reduce((acc, friendship) => {
       const friendId = friendsIds.includes(friendship.initiator) ? friendship.invitee : friendship.initiator;
       acc.add(friendId);
       return acc;
     }, new Set());
-
-    console.log('suggestedFriendsIds');
 
     // Add current user's ID to exclude from suggestions
     suggestedFriendsIds.add(userId);
