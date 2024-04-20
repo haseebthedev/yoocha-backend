@@ -165,7 +165,7 @@ export class ChatService {
     // this.eventsGateway.server.emit(Events.RECEIVE_MESSAGE, { ...message });
 
     if (payload?.message) {
-      await this.chatRoomModel.findByIdAndUpdate(roomId, {lastMessage: payload.message})
+      await this.chatRoomModel.findByIdAndUpdate(roomId, { lastMessage: payload.message });
     }
 
     return message;
@@ -193,15 +193,21 @@ export class ChatService {
       .select('initiator invitee');
 
     const suggestedFriendsIds = friendsOfFriends.reduce((acc, friendship) => {
-      const friendId = friendship.initiator == userId ? friendship.invitee : friendship.initiator;
-      if (!friendsIds.includes(friendId) && friendId != userId) {
+      const friendId = friendsIds.includes(friendship.initiator) ? friendship.invitee : friendship.initiator;
+
+      if (friendId !== userId) {
         acc.add(friendId);
       }
       return acc;
     }, new Set());
 
     // Fetch user details of suggested friends
-    return await this.userService.find({ _id: { $in: Array.from(suggestedFriendsIds) } }, paginateOptions);
+    return await this.userService.find(
+      {
+        _id: { $in: Array.from(suggestedFriendsIds), $nin: Array.from(friendsIds) },
+      },
+      paginateOptions,
+    );
   }
 
   async explorePeople(userId: string, paginateOptions?: PaginateOptions) {
@@ -210,50 +216,49 @@ export class ChatService {
     // Find user's friends
     const userFriends = await this.chatRoomModel
       .find({
-        $or: [
-          { initiator: userId },
-          { invitee: userId },
-          { status: ChatRoomState.ACTIVE },
-          { status: ChatRoomState.PENDING },
-          { status: ChatRoomState.BLOCKED },
-        ],
+        $or: [{ initiator: userId }, { invitee: userId }],
+        status: ChatRoomState.ACTIVE,
       })
       .select('initiator invitee');
 
-    const friendsIds = userFriends.map((friendship) => {
-      return friendship.initiator == userId ? friendship.invitee : friendship.initiator;
-    });
+    const friendsIds = userFriends.map((friendship) =>
+      friendship.initiator === userId ? friendship.invitee : friendship.initiator,
+    );
+
+    console.log('friendsIds === ', friendsIds);
 
     // Find friends of friends
     const friendsOfFriends = await this.chatRoomModel
       .find({
-        $or: [
-          { initiator: { $in: friendsIds } },
-          { invitee: { $in: friendsIds } },
-          { status: ChatRoomState.ACTIVE },
-          { status: ChatRoomState.PENDING },
-          { status: ChatRoomState.BLOCKED },
-        ],
+        $or: [{ initiator: { $in: friendsIds } }, { invitee: { $in: friendsIds } }],
       })
       .select('initiator invitee');
 
+    console.log('friendsOfFriends === ', friendsOfFriends);
+
     const suggestedFriendsIds = friendsOfFriends.reduce((acc, friendship) => {
-      const friendId = friendship.initiator == userId ? friendship.invitee : friendship.initiator;
+      const friendId = friendsIds.includes(friendship.initiator) ? friendship.invitee : friendship.initiator;
       acc.add(friendId);
       return acc;
     }, new Set());
+
+    console.log('suggestedFriendsIds');
 
     // Add current user's ID to exclude from suggestions
     suggestedFriendsIds.add(userId);
 
     // Fetch users who are not in the current user's friends list or friends of friends,
-    // and are in the same country
+    // and are in the same city or country
     return await this.userService.find(
       {
         $and: [
-          { _id: { $nin: Array.from(suggestedFriendsIds) } },
-          { _id: { $nin: friendsIds } },
-          { city: userInfo.city, country: userInfo.country },
+          { _id: { $nin: Array.from([...suggestedFriendsIds, ...friendsIds]) } }, // Not in friends or friends of friends
+          {
+            $or: [
+              { city: userInfo.city }, // Same city
+              { country: userInfo.country }, // Same country
+            ],
+          },
         ],
       },
       paginateOptions,
