@@ -176,7 +176,6 @@ export class ChatService {
     const userFriends = await this.chatRoomModel
       .find({
         $or: [{ initiator: userId }, { invitee: userId }],
-        status: ChatRoomState.ACTIVE,
       })
       .select('initiator invitee');
 
