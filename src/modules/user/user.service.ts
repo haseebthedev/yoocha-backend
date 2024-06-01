@@ -3,15 +3,14 @@ import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
 import { generateRandomDigits } from 'src/common/utils/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { ChangePassDTO, UpdateProfileDTO } from './dto';
+import { ChangePassDTO, ContactUsDTO, UpdateProfileDTO } from './dto';
 import { SignUpDTO } from '../auth/dto';
 import * as bcrypt from 'bcrypt';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectModel(User.name) private userModel: PaginateModel<User>,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: PaginateModel<User>) {}
 
   async create(dto: SignUpDTO): Promise<User> {
     const userInDB = await this.userModel.findOne({ email: dto.email });
@@ -95,5 +94,36 @@ export class UserService {
     user.authCode = undefined;
 
     return { result: 'Your password has been changed successfully.' };
+  }
+
+  async contactUs(dto: ContactUsDTO) {
+    console.log('contact us');
+
+    if (!dto.name || !dto.email || !dto.message) {
+      throw new BadRequestException('All fields are required.');
+    }
+
+    var transporter = nodemailer.createTransport({
+      host: process.env.MAILTRAP_HOST,
+      port: process.env.MAILTRAP_PORT,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: dto.email,
+      to: process.env.CONTACT_EMAIL,
+      subject: 'Contact Us Form Submission',
+      text: `Name: ${dto.name}\nEmail: ${dto.email}\nMessage: ${dto.message}`,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      return { message: 'Message sent successfully!' };
+    } catch (error) {
+      throw new BadRequestException('Failed to send message. Please try again later.');
+    }
   }
 }

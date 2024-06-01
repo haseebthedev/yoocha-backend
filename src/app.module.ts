@@ -9,6 +9,7 @@ import { ObjectIdInterceptor, ResultInterceptor } from './common/interceptors';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { FileModule } from './modules/file/file.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ChatModule } from './modules/chat/chat.module';
     EventsModule,
     CloudinaryModule,
     FileModule,
+    NotificationModule,
   ],
   providers: [
     {

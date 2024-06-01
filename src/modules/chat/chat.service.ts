@@ -209,7 +209,7 @@ export class ChatService {
     );
   }
 
-  async explorePeople(userId: string, paginateOptions?: PaginateOptions) {
+  async explorePeople(userId: string, name: string, paginateOptions?: PaginateOptions) {
     const userInfo = await this.userService.findById(userId);
 
     // Find user's friends
@@ -239,22 +239,28 @@ export class ChatService {
     // Add current user's ID to exclude from suggestions
     suggestedFriendsIds.add(userId);
 
+    // Create the base search criteria
+    let searchCriteria: any = {
+      $and: [
+        { _id: { $nin: Array.from([...suggestedFriendsIds, ...friendsIds]) } }, // Not in friends or friends of friends
+        {
+          $or: [
+            { city: userInfo.city }, // Same city
+            { country: userInfo.country }, // Same country
+          ],
+        },
+      ],
+    };
+
+    if (name) {
+      searchCriteria.$and.push({
+        $or: [{ firstname: new RegExp(name, 'i') }, { lastname: new RegExp(name, 'i') }],
+      });
+    }
+
     // Fetch users who are not in the current user's friends list or friends of friends,
     // and are in the same city or country
-    return await this.userService.find(
-      {
-        $and: [
-          { _id: { $nin: Array.from([...suggestedFriendsIds, ...friendsIds]) } }, // Not in friends or friends of friends
-          {
-            $or: [
-              { city: userInfo.city }, // Same city
-              { country: userInfo.country }, // Same country
-            ],
-          },
-        ],
-      },
-      paginateOptions,
-    );
+    return await this.userService.find(searchCriteria, paginateOptions);
   }
 
   async listActiveRoomsIdsByUserId(userId: string): Promise<string[]> {

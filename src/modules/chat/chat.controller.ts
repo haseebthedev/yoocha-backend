@@ -1,4 +1,15 @@
-import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 import { UserService } from '../user/user.service';
@@ -125,7 +136,8 @@ export class ChatController {
     @GetUser('id', MongoIdValidationPipe) userId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('name') name: string,
   ) {
-    return await this.chatService.explorePeople(userId, { page, limit });
+    return await this.chatService.explorePeople(userId, name, { page, limit });
   }
 }

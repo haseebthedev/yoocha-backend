@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ChangePassDTO {
   @IsString()
@@ -30,4 +30,18 @@ export class UpdateProfileDTO {
   @IsString()
   @IsOptional()
   country: string;
+}
+
+export class ContactUsDTO {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  message: string;
 }
