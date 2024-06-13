@@ -19,7 +19,7 @@ export class NotificationService {
 
   async getNotifications(userId: string, paginateOptions?: PaginateOptions): Promise<any> {
     const query: FilterQuery<Notification> = {
-      recipientId: userId,
+      recipientId: userId.toString(),
     };
 
     return await this.notificationModel.paginate(query, paginateOptions);

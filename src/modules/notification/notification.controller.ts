@@ -14,6 +14,8 @@ import {
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../auth/guards';
 import { NotificationDTO } from './dto';
+import { GetUser } from 'src/common/decorators';
+import { User } from '../user/schemas/user.schema';
 
 @UseGuards(JwtAuthGuard)
 @Controller('notification')
@@ -27,11 +29,15 @@ export class NotificationController {
 
   @Get('list-notifications')
   async getNotifications(
-    @Query('userId') userId: string,
+    @GetUser() user: User,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return this.notificationService.getNotifications(userId, { page, limit, populate: 'senderId recipientId' });
+    return this.notificationService.getNotifications(user._id, {
+      page,
+      limit,
+      populate: 'senderId recipientId',
+    });
   }
 
   @Get(':id')
