@@ -16,6 +16,8 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({}));
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-  await app.listen(process.env.PORT);
+
+  const PORT = process.env.PORT || 7777
+  await app.listen(PORT);
 }
 bootstrap();

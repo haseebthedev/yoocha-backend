@@ -14,7 +14,7 @@ import { AuthService } from '../auth/auth.service';
 import { UserService } from '../user/user.service';
 import { Inject, forwardRef } from '@nestjs/common';
 
-@WebSocketGateway(parseInt(process.env.PORT), { namespace: 'events' })
+@WebSocketGateway(parseInt(process.env.PORT, 10), { namespace: 'events' })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     @Inject(forwardRef(() => ChatService))
