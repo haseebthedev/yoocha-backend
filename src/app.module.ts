@@ -18,7 +18,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     AuthModule,
     UserModule,
     ChatModule,
-    EventsModule,
+    // EventsModule,
     CloudinaryModule,
     FileModule,
     NotificationModule,
