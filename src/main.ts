@@ -16,6 +16,6 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({}));
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-  await app.listen(10000);
+  await app.listen(process.env.PORT || 10000);
 }
 bootstrap();
