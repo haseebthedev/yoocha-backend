@@ -157,10 +157,13 @@ export class ChatService {
       message: payload?.message,
     });
 
+    console.log("sendMessage....")
+
     await message.save();
     await message.populate('sender');
 
     // sending this event to server
+    console.log("roomId: ", roomId, "message: ", message)
     this.eventsGateway.server.to(String(roomId)).emit(Events.RECEIVE_MESSAGE, { ...message });
     // this.eventsGateway.server.emit(Events.RECEIVE_MESSAGE, { ...message });
 

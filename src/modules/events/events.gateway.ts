@@ -1,32 +1,27 @@
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Events } from './enums';
 import { ChatService } from '../chat/chat.service';
-import { ChatMessageDocument } from '../chat/schemas';
-import { ParticipantI } from 'src/interfaces';
 import { AuthService } from '../auth/auth.service';
-import { UserService } from '../user/user.service';
 import { Inject, forwardRef } from '@nestjs/common';
 
-@WebSocketGateway(8080, { namespace: 'events', cors: { origin: '*' } })
+// @WebSocketGateway(parseInt(process.env.PORT, 10), { namespace: 'events' })
+@WebSocketGateway()
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     @Inject(forwardRef(() => ChatService))
     private readonly chatService: ChatService,
-
-    private authService: AuthService,
-    private userService: UserService,
+    private readonly authService: AuthService,
   ) {}
 
   @WebSocketServer() public server: Server;
 
   async handleConnection(client: Socket) {
+    // console.log("client === ", client.id)
     // Join the client to a room identified by its roomId
     // console.log('client connected: ', client.id);
     const token = client.handshake.headers['authorization'];
