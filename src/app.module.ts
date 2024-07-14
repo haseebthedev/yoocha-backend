@@ -10,6 +10,7 @@ import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { FileModule } from './modules/file/file.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     FileModule,
     NotificationModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_INTERCEPTOR,

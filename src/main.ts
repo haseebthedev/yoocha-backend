@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: '*', // or specify the domains you want to allow
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -16,7 +16,6 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({}));
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-  // await app.listen(PORT, '0.0.0.0');
   await app.listen(process.env.PORT);
 }
 bootstrap();
