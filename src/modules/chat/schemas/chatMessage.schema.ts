@@ -16,6 +16,9 @@ export class ChatMessage extends BaseSchema {
 
   @Prop({ type: Array<string>, default: null })
   files: string[];
+
+  @Prop({ type: String, enum: ['text', 'image'], default: null })
+  type: 'text' | 'image';
 }
 
 export type ChatMessageDocument = HydratedDocument<ChatMessage>;

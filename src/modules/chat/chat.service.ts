@@ -150,20 +150,22 @@ export class ChatService {
   }
 
   async sendMessage(roomId: string, senderId: string, payload: SendMessagePayloadDto) {
+    console.log('send message');
     const message = await this.ChatMessageModel.create({
       chatRoomId: roomId,
       sender: senderId,
       files: payload?.files,
       message: payload?.message,
+      type: payload?.type || 'text',
     });
 
-    console.log("sendMessage....")
+    console.log('sendMessage....');
 
     await message.save();
     await message.populate('sender');
 
     // sending this event to server
-    console.log("roomId: ", roomId, "message: ", message)
+    console.log('roomId: ', roomId, 'message: ', message);
     this.eventsGateway.server.to(String(roomId)).emit(Events.RECEIVE_MESSAGE, { ...message });
     // this.eventsGateway.server.emit(Events.RECEIVE_MESSAGE, { ...message });
 

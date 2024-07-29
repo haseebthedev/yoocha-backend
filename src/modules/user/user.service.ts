@@ -50,6 +50,15 @@ export class UserService {
     return user;
   }
 
+  async findByIdAndDelete(userId: string): Promise<{ result: string }> {
+    const user = await this.userModel.findByIdAndDelete(userId).exec();
+    if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
+
+    return {
+      result: 'Successfully deleted account.',
+    };
+  }
+
   async findAll(filters?: FilterQuery<User>): Promise<User[]> {
     return await this.userModel.find(filters ? filters : {}).exec();
   }
@@ -97,8 +106,6 @@ export class UserService {
   }
 
   async contactUs(dto: ContactUsDTO) {
-    console.log('contact us');
-
     if (!dto.name || !dto.email || !dto.message) {
       throw new BadRequestException('All fields are required.');
     }
