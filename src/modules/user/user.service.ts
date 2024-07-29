@@ -7,6 +7,7 @@ import { ChangePassDTO, ContactUsDTO, UpdateProfileDTO } from './dto';
 import { SignUpDTO } from '../auth/dto';
 import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
+import { createMailtrapTransporter } from 'src/common/utils';
 
 @Injectable()
 export class UserService {
@@ -110,14 +111,7 @@ export class UserService {
       throw new BadRequestException('All fields are required.');
     }
 
-    var transporter = nodemailer.createTransport({
-      host: process.env.MAILTRAP_HOST,
-      port: process.env.MAILTRAP_PORT,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const transporter = createMailtrapTransporter();
 
     const mailOptions = {
       from: dto.email,
