@@ -13,11 +13,11 @@ export class NotificationDTO {
 
   @IsMongoId()
   @IsNotEmpty()
-  fromUser: Types.ObjectId;
+  from: Types.ObjectId;
 
   @IsMongoId()
   @IsNotEmpty()
-  toUser: Types.ObjectId;
+  to: Types.ObjectId;
 
   @IsEnum(NotificationStatus)
   @IsOptional()

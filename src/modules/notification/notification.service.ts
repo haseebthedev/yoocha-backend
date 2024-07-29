@@ -11,7 +11,7 @@ export class NotificationService {
   constructor(@InjectModel(Notification.name) private notificationModel: PaginateModel<Notification>) {}
 
   async createNotification(dto: NotificationDTO): Promise<Notification> {
-    if (!dto.toUser || !dto.fromUser || !dto.message || !dto.type) {
+    if (!dto.to || !dto.from || !dto.message || !dto.type) {
       throw new BadRequestException('You are missing required fields!');
     }
     const createdNotification = new this.notificationModel({

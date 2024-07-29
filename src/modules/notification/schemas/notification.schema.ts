@@ -17,10 +17,10 @@ export class Notification extends BaseSchema {
   type: NotificationType;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  fromUser: Types.ObjectId;
+  from: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  toUser: Types.ObjectId;
+  to: Types.ObjectId;
 
   @Prop({ type: String, enum: NotificationStatus, default: NotificationStatus.SENT })
   @IsEnum(NotificationStatus)
