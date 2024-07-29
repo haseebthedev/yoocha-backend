@@ -36,7 +36,7 @@ export class NotificationController {
     return this.notificationService.getNotifications(user._id, {
       page,
       limit,
-      populate: 'senderId recipientId',
+      populate: 'fromUser toUser',
     });
   }
 

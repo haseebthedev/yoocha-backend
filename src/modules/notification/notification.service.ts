@@ -4,22 +4,28 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './schemas/notification.schema';
 import { NotificationDTO } from './dto';
 import { FilterQuery } from 'mongoose';
+import { NotificationStatus } from 'src/common/enums/notifications.enum';
 
 @Injectable()
 export class NotificationService {
   constructor(@InjectModel(Notification.name) private notificationModel: PaginateModel<Notification>) {}
 
   async createNotification(dto: NotificationDTO): Promise<Notification> {
-    if (!dto.recipientId || !dto.senderId || !dto.message)
-      throw new BadRequestException(`You are missing Required Field!`);
+    if (!dto.to || !dto.from || !dto.message || !dto.type) {
+      throw new BadRequestException('You are missing required fields!');
+    }
+    const createdNotification = new this.notificationModel({
+      ...dto,
+      status: dto.status || NotificationStatus.SENT,
+      isRead: dto.isRead ?? false,
+    });
 
-    const createdNotification = new this.notificationModel(dto);
     return createdNotification.save();
   }
 
   async getNotifications(userId: string, paginateOptions?: PaginateOptions): Promise<any> {
     const query: FilterQuery<Notification> = {
-      recipientId: userId.toString(),
+      toUser: userId.toString(),
     };
 
     return await this.notificationModel.paginate(query, paginateOptions);
@@ -30,7 +36,7 @@ export class NotificationService {
     if (!notification) {
       throw new NotFoundException('Notification not found');
     }
-    return notification.populate('senderId recipientId');
+    return notification.populate('fromUser toUser');
   }
 
   async markAsRead(id: string): Promise<Notification> {
