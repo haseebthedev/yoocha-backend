@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { ChangePassDTO, ContactUsDTO, UpdateProfileDTO } from './dto';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards';
@@ -18,6 +18,11 @@ export class UserController {
   @Patch('me')
   async updateProfile(@GetUser() user: User, @Body() dto: UpdateProfileDTO) {
     return await this.userService.findByIdandUpdate(user._id, dto);
+  }
+
+  @Delete('me')
+  async deleteAccount(@GetUser() user: User) {
+    return await this.userService.findByIdAndDelete(user._id);
   }
 
   @Post('change-password')

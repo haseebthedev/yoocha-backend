@@ -18,4 +18,8 @@ export class SendMessagePayloadDto {
   @IsString({ each: true })
   @IsOptional()
   files?: string[];
+
+  @IsEnum(['text', 'image'])
+  @IsOptional()
+  type?: 'text' | 'image';
 }

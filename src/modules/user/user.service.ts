@@ -7,6 +7,7 @@ import { ChangePassDTO, ContactUsDTO, UpdateProfileDTO } from './dto';
 import { SignUpDTO } from '../auth/dto';
 import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
+import { createMailtrapTransporter } from 'src/common/utils';
 
 @Injectable()
 export class UserService {
@@ -48,6 +49,15 @@ export class UserService {
     user.authCode = undefined;
     user.password = undefined;
     return user;
+  }
+
+  async findByIdAndDelete(userId: string): Promise<{ result: string }> {
+    const user = await this.userModel.findByIdAndDelete(userId).exec();
+    if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
+
+    return {
+      result: 'Successfully deleted account.',
+    };
   }
 
   async findAll(filters?: FilterQuery<User>): Promise<User[]> {
@@ -97,20 +107,11 @@ export class UserService {
   }
 
   async contactUs(dto: ContactUsDTO) {
-    console.log('contact us');
-
     if (!dto.name || !dto.email || !dto.message) {
       throw new BadRequestException('All fields are required.');
     }
 
-    var transporter = nodemailer.createTransport({
-      host: process.env.MAILTRAP_HOST,
-      port: process.env.MAILTRAP_PORT,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const transporter = createMailtrapTransporter();
 
     const mailOptions = {
       from: dto.email,

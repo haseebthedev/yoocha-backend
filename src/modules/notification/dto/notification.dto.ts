@@ -1,15 +1,28 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Types } from 'mongoose';
+import { NotificationStatus, NotificationType } from 'src/common/enums/notifications.enum';
 
 export class NotificationDTO {
   @IsString()
   @IsNotEmpty()
   message: string;
 
-  @IsString()
+  @IsEnum(NotificationType)
   @IsNotEmpty()
-  senderId: string;
+  type: NotificationType;
 
-  @IsString()
+  @IsMongoId()
   @IsNotEmpty()
-  recipientId: string;
+  from: Types.ObjectId;
+
+  @IsMongoId()
+  @IsNotEmpty()
+  to: Types.ObjectId;
+
+  @IsEnum(NotificationStatus)
+  @IsOptional()
+  status?: NotificationStatus;
+
+  @IsOptional()
+  isRead?: boolean;
 }
