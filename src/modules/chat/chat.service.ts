@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
-import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
+import { FilterQuery, PaginateModel, PaginateOptions, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { UserService } from '../user/user.service';
@@ -8,6 +8,9 @@ import { SendMessagePayloadDto } from './dto';
 import { ChatRoom, ChatMessage } from './schemas';
 import { EventsGateway } from '../events/events.gateway';
 import { Events } from '../events/enums';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from 'src/common/enums/notifications.enum';
+import { CreateTokenDto } from '../token/dto/create-token.dto';
 
 @Injectable()
 export class ChatService {
@@ -15,6 +18,7 @@ export class ChatService {
     @InjectModel(ChatRoom.name) private chatRoomModel: PaginateModel<ChatRoom>,
     @InjectModel(ChatMessage.name) private ChatMessageModel: PaginateModel<ChatMessage>,
     private userService: UserService,
+    private readonly notificationService: NotificationService,
 
     @Inject(forwardRef(() => EventsGateway))
     private readonly eventsGateway: EventsGateway,
@@ -32,7 +36,7 @@ export class ChatService {
     return !!existingRoom;
   }
 
-  async createRoom(initiatorId: string, inviteeId: string) {
+  async createRoom(initiatorId: string, inviteeId: string, fcmToken: CreateTokenDto) {
     const existingRoom = await this.roomAlreadyExists(initiatorId, inviteeId);
 
     if (existingRoom) {
@@ -41,6 +45,20 @@ export class ChatService {
 
     // If no room exists, create a new one
     const newRoom = new this.chatRoomModel({ initiator: initiatorId, invitee: inviteeId });
+    await newRoom.save();
+
+    await this.notificationService.createNotification(
+      {
+        message: `sent you friend request`,
+        to: new Types.ObjectId(inviteeId),
+        type: NotificationType.FRIEND_REQUEST_RECIEVED,
+        isRead: false,
+        sendPushNotification: true,
+        fcmToken: fcmToken.token,
+      },
+      initiatorId,
+    );
+
     return newRoom.save();
   }
 

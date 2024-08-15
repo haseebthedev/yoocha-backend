@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  DefaultValuePipe,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 import { UserService } from '../user/user.service';
@@ -17,6 +6,7 @@ import { GetUser } from 'src/common/decorators';
 import { SendMessagePayloadDto } from './dto';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards';
+import { CreateTokenDto } from '../token/dto/create-token.dto';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -26,12 +16,13 @@ export class ChatController {
     private userService: UserService,
   ) {}
 
-  @Get('send-friend-req')
+  @Post('send-friend-req')
   async sendFriendReq(
     @GetUser('id', MongoIdValidationPipe) initiatorId: string,
     @Query('inviteeId', MongoIdValidationPipe) inviteeId: string,
+    @Body('fcmToken') fcmToken: CreateTokenDto,
   ) {
-    const roomCreated = await this.chatService.createRoom(initiatorId, inviteeId);
+    const roomCreated = await this.chatService.createRoom(initiatorId, inviteeId, fcmToken);
     if (roomCreated) {
       return { status: 'Your request has been sent' };
     }

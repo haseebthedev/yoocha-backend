@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { HydratedDocument, Types } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
 import * as Paginate from 'mongoose-paginate-v2';
-import { NotificationStatus, NotificationType } from 'src/common/enums/notifications.enum';
+import { NotificationType } from 'src/common/enums/notifications.enum';
 
 @Schema()
 export class Notification extends BaseSchema {
@@ -21,10 +21,6 @@ export class Notification extends BaseSchema {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   to: Types.ObjectId;
-
-  @Prop({ type: String, enum: NotificationStatus, default: NotificationStatus.SENT })
-  @IsEnum(NotificationStatus)
-  status: NotificationStatus;
 
   @Prop({ type: Boolean, default: false })
   isRead: boolean;

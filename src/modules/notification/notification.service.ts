@@ -4,31 +4,66 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Notification } from './schemas/notification.schema';
 import { NotificationDTO } from './dto';
 import { FilterQuery } from 'mongoose';
-import { NotificationStatus } from 'src/common/enums/notifications.enum';
+import { FirebaseAdminService } from '../firebase/firebase-admin.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class NotificationService {
-  constructor(@InjectModel(Notification.name) private notificationModel: PaginateModel<Notification>) {}
+  constructor(
+    @InjectModel(Notification.name) private notificationModel: PaginateModel<Notification>,
+    private readonly firebaseAdminService: FirebaseAdminService,
+    private userService: UserService,
+  ) {}
 
-  async createNotification(dto: NotificationDTO): Promise<Notification> {
-    if (!dto.to || !dto.from || !dto.message || !dto.type) {
+  async sendNotification(fcmToken: string, title: string, body: string): Promise<void> {
+    console.log(fcmToken, title, body);
+    const message = {
+      notification: {
+        title,
+        body,
+      },
+      token: fcmToken,
+    };
+
+    try {
+      await this.firebaseAdminService.getFirebaseApp().messaging().send(message);
+      console.log('successfully send notification');
+    } catch (error) {
+      throw new BadRequestException('Failed to send push notification');
+    }
+  }
+
+  async createNotification(dto: NotificationDTO, userId: string): Promise<Notification> {
+    const user = await this.userService.findById(userId);
+    const senderName = `${user.firstname} ${user.lastname}`;
+
+    if (!dto.to || !dto.message || !dto.type) {
       throw new BadRequestException('You are missing required fields!');
     }
     const createdNotification = new this.notificationModel({
       ...dto,
-      status: dto.status || NotificationStatus.SENT,
+      from: userId.toString(),
       isRead: dto.isRead ?? false,
     });
+
+    if (dto.sendPushNotification && dto.fcmToken) {
+      await this.sendNotification(dto.fcmToken, senderName, dto.message);
+    }
 
     return createdNotification.save();
   }
 
   async getNotifications(userId: string, paginateOptions?: PaginateOptions): Promise<any> {
     const query: FilterQuery<Notification> = {
-      toUser: userId.toString(),
+      to: userId.toString(),
     };
 
-    return await this.notificationModel.paginate(query, paginateOptions);
+    const options = {
+      ...paginateOptions,
+      sort: { createdAt: -1 },
+    };
+
+    return await this.notificationModel.paginate(query, options);
   }
 
   async getNotificationById(id: string): Promise<Notification> {
@@ -36,7 +71,7 @@ export class NotificationService {
     if (!notification) {
       throw new NotFoundException('Notification not found');
     }
-    return notification.populate('fromUser toUser');
+    return notification.populate('from to');
   }
 
   async markAsRead(id: string): Promise<Notification> {

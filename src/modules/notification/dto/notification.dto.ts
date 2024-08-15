@@ -1,6 +1,6 @@
-import { IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Types } from 'mongoose';
-import { NotificationStatus, NotificationType } from 'src/common/enums/notifications.enum';
+import { NotificationType } from 'src/common/enums/notifications.enum';
 
 export class NotificationDTO {
   @IsString()
@@ -13,16 +13,17 @@ export class NotificationDTO {
 
   @IsMongoId()
   @IsNotEmpty()
-  from: Types.ObjectId;
-
-  @IsMongoId()
-  @IsNotEmpty()
   to: Types.ObjectId;
 
-  @IsEnum(NotificationStatus)
-  @IsOptional()
-  status?: NotificationStatus;
-
+  @IsBoolean()
   @IsOptional()
   isRead?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  sendPushNotification?: boolean;
+
+  @IsString()
+  @IsOptional()
+  fcmToken?: string;
 }

@@ -11,6 +11,7 @@ import { FileModule } from './modules/file/file.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { AppController } from './app.controller';
+import { TokenModule } from './modules/token/token.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AppController } from './app.controller';
     CloudinaryModule,
     FileModule,
     NotificationModule,
+    TokenModule,
   ],
   controllers: [AppController],
   providers: [

@@ -5,6 +5,7 @@ import { ChatMessage, ChatMessageSchema, ChatRoom, ChatRoomSchema } from './sche
 import { UserModule } from '../user/user.module';
 import { ChatController } from './chat.controller';
 import { EventsModule } from '../events/events.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { EventsModule } from '../events/events.module';
       { name: ChatMessage.name, schema: ChatMessageSchema },
     ]),
     UserModule,
+    NotificationModule,
     forwardRef(() => EventsModule),
   ],
   controllers: [ChatController],
