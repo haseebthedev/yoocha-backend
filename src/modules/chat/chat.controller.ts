@@ -20,15 +20,14 @@ export class ChatController {
   async sendFriendReq(
     @GetUser('id', MongoIdValidationPipe) initiatorId: string,
     @Query('inviteeId', MongoIdValidationPipe) inviteeId: string,
-    @Body('fcmToken') fcmToken: CreateTokenDto,
   ) {
-    const roomCreated = await this.chatService.createRoom(initiatorId, inviteeId, fcmToken);
+    const roomCreated = await this.chatService.createRoom(initiatorId, inviteeId);
     if (roomCreated) {
       return { status: 'Your request has been sent' };
     }
   }
 
-  @Get('accept-friend-req')
+  @Post('accept-friend-req')
   async acceptFriendReq(
     @GetUser('id', MongoIdValidationPipe) inviteeId: string,
     @Query('roomId', MongoIdValidationPipe) roomId: string,

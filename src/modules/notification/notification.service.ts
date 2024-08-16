@@ -6,6 +6,7 @@ import { NotificationDTO } from './dto';
 import { FilterQuery } from 'mongoose';
 import { FirebaseAdminService } from '../firebase/firebase-admin.service';
 import { UserService } from '../user/user.service';
+import { NotificationType } from 'src/common/enums/notifications.enum';
 
 @Injectable()
 export class NotificationService {
@@ -15,19 +16,50 @@ export class NotificationService {
     private userService: UserService,
   ) {}
 
-  async sendNotification(fcmToken: string, title: string, body: string): Promise<void> {
-    console.log(fcmToken, title, body);
+  async determineScreen(notificationType: NotificationType): Promise<any> {
+    switch (notificationType) {
+      case NotificationType.ONBOARDING:
+        return 'recieverequests';
+      case NotificationType.MESSAGE:
+        return 'recieverequests';
+      case NotificationType.FRIEND_REQUEST_RECIEVED:
+        return 'recieverequests';
+      case NotificationType.FRIEND_REQUEST_RECIEVED:
+        return 'recieverequests';
+      default:
+        return 'notifications';
+    }
+  }
+
+  async sendNotification(
+    createdNotification: NotificationDTO,
+    fcmToken: string,
+    title: string,
+    body: string,
+  ): Promise<void> {
+    const screen = await this.determineScreen(createdNotification.type);
+
     const message = {
       notification: {
         title,
         body,
+      },
+      android: {
+        notification: {
+          color: '#f45342',
+          imageUrl:
+            'https://plus.unsplash.com/premium_photo-1673002094195-f18084be89ce?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+          sound: 'default',
+        },
+      },
+      data: {
+        screen,
       },
       token: fcmToken,
     };
 
     try {
       await this.firebaseAdminService.getFirebaseApp().messaging().send(message);
-      console.log('successfully send notification');
     } catch (error) {
       throw new BadRequestException('Failed to send push notification');
     }
@@ -42,12 +74,13 @@ export class NotificationService {
     }
     const createdNotification = new this.notificationModel({
       ...dto,
+      to: dto.to.toString(),
       from: userId.toString(),
       isRead: dto.isRead ?? false,
     });
 
     if (dto.sendPushNotification && dto.fcmToken) {
-      await this.sendNotification(dto.fcmToken, senderName, dto.message);
+      await this.sendNotification(createdNotification, dto.fcmToken, senderName, dto.message);
     }
 
     return createdNotification.save();

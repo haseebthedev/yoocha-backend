@@ -11,10 +11,13 @@ import { Events } from '../events/enums';
 import { NotificationService } from '../notification/notification.service';
 import { NotificationType } from 'src/common/enums/notifications.enum';
 import { CreateTokenDto } from '../token/dto/create-token.dto';
+import { Token } from '../token/schemas/token.schema';
+import { TokenService } from '../token/token.service';
 
 @Injectable()
 export class ChatService {
   constructor(
+    @InjectModel(Token.name) private tokenModel: PaginateModel<Token>,
     @InjectModel(ChatRoom.name) private chatRoomModel: PaginateModel<ChatRoom>,
     @InjectModel(ChatMessage.name) private ChatMessageModel: PaginateModel<ChatMessage>,
     private userService: UserService,
@@ -36,7 +39,27 @@ export class ChatService {
     return !!existingRoom;
   }
 
-  async createRoom(initiatorId: string, inviteeId: string, fcmToken: CreateTokenDto) {
+  async createNotification(initiatorId: string, tokens: Token[], message: string, type: NotificationType) {
+    for (const token of tokens) {
+      await this.notificationService.createNotification(
+        {
+          message,
+          type,
+          to: new Types.ObjectId(token.userId),
+          isRead: false,
+          sendPushNotification: true,
+          fcmToken: token.token,
+        },
+        initiatorId,
+      );
+    }
+  }
+
+  async createRoom(initiatorId: string, inviteeId: string) {
+    const user = await this.userService.findById(initiatorId);
+    const senderName = `${user.firstname} ${user.lastname}`;
+    const tokens = await this.tokenModel.find({ userId: inviteeId });
+
     const existingRoom = await this.roomAlreadyExists(initiatorId, inviteeId);
 
     if (existingRoom) {
@@ -47,23 +70,21 @@ export class ChatService {
     const newRoom = new this.chatRoomModel({ initiator: initiatorId, invitee: inviteeId });
     await newRoom.save();
 
-    await this.notificationService.createNotification(
-      {
-        message: `sent you friend request`,
-        to: new Types.ObjectId(inviteeId),
-        type: NotificationType.FRIEND_REQUEST_RECIEVED,
-        isRead: false,
-        sendPushNotification: true,
-        fcmToken: fcmToken.token,
-      },
-      initiatorId,
-    );
+    if (tokens.length > 0) {
+      await this.createNotification(
+        initiatorId,
+        tokens,
+        `${senderName} sent you friend request.`,
+        NotificationType.FRIEND_REQUEST_RECIEVED,
+      );
+    }
 
-    return newRoom.save();
+    return newRoom;
   }
 
   async joinRoom(roomId: string, inviteeId: string) {
     const room = await this.chatRoomModel.findById(roomId);
+    const tokens = await this.tokenModel.find({ userId: room.initiator });
 
     if (!room) throw new NotFoundException('Chatroom not found');
 
@@ -71,6 +92,16 @@ export class ChatService {
 
     room.status = ChatRoomState.ACTIVE;
     await room.save();
+
+    if (tokens.length > 0) {
+      await this.createNotification(
+        room.invitee,
+        tokens,
+        `Accepted your friend request.`,
+        NotificationType.FRIEND_REQUEST_ACCEPTED,
+      );
+    }
+
     return room;
   }
 

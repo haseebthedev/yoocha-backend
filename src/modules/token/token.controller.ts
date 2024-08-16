@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, Delete } from '@nestjs/common';
 import { TokenService } from './token.service';
 import { CreateTokenDto } from './dto/create-token.dto';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
@@ -15,5 +15,10 @@ export class TokenController {
   @Get('get-token')
   async getToken(@Query('userId', MongoIdValidationPipe) userId: string) {
     return this.tokenService.getToken(userId);
+  }
+
+  @Delete('remove-token')
+  async removeToken(@Query('userId', MongoIdValidationPipe) userId: string) {
+    return this.tokenService.removeToken(userId);
   }
 }

@@ -17,4 +17,9 @@ export class TokenService {
     const tokens = await this.tokenModel.find({ userId: userId });
     return { docs: tokens };
   }
+
+  async removeToken(userId: string): Promise<{ docs: Token[] }> {
+    const tokens = await this.tokenModel.find({ userId: userId });
+    return { docs: tokens };
+  }
 }
