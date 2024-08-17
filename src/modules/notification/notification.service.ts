@@ -7,6 +7,7 @@ import { FilterQuery } from 'mongoose';
 import { FirebaseAdminService } from '../firebase/firebase-admin.service';
 import { UserService } from '../user/user.service';
 import { NotificationType } from 'src/common/enums/notifications.enum';
+import { capitalize } from 'src/common/utils/formatString';
 
 @Injectable()
 export class NotificationService {
@@ -47,8 +48,6 @@ export class NotificationService {
       android: {
         notification: {
           color: '#f45342',
-          imageUrl:
-            'https://plus.unsplash.com/premium_photo-1673002094195-f18084be89ce?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
           sound: 'default',
         },
       },
@@ -67,7 +66,7 @@ export class NotificationService {
 
   async createNotification(dto: NotificationDTO, userId: string): Promise<Notification> {
     const user = await this.userService.findById(userId);
-    const senderName = `${user.firstname} ${user.lastname}`;
+    const senderName = `${capitalize(user.firstname)} ${capitalize(user.lastname)}`;
 
     if (!dto.to || !dto.message || !dto.type) {
       throw new BadRequestException('You are missing required fields!');

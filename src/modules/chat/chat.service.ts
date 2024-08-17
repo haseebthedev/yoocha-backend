@@ -199,7 +199,11 @@ export class ChatService {
   }
 
   async sendMessage(roomId: string, senderId: string, payload: SendMessagePayloadDto) {
-    console.log('send message');
+    const room = await this.chatRoomModel.findById(roomId);
+    const to = room.initiator === senderId ? room.invitee : room.initiator;
+
+    const tokens = await this.tokenModel.find({ userId: to });
+
     const message = await this.ChatMessageModel.create({
       chatRoomId: roomId,
       sender: senderId,
@@ -208,13 +212,19 @@ export class ChatService {
       type: payload?.type || 'text',
     });
 
-    console.log('sendMessage....');
+    // console.log('sendMessage....');
 
     await message.save();
     await message.populate('sender');
 
+    // Check if it's the first message in the room create notification
+    const messageCount = await this.ChatMessageModel.countDocuments({ chatRoomId: roomId });
+    if (messageCount === 1 && tokens.length > 0) {
+      await this.createNotification(senderId, tokens, `Sent you a message.`, NotificationType.MESSAGE);
+    }
+
     // sending this event to server
-    console.log('roomId: ', roomId, 'message: ', message);
+    // console.log('roomId: ', roomId, 'message: ', message);
     this.eventsGateway.server.to(String(roomId)).emit(Events.RECEIVE_MESSAGE, { ...message });
     // this.eventsGateway.server.emit(Events.RECEIVE_MESSAGE, { ...message });
 

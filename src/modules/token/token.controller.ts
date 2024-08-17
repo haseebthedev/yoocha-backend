@@ -18,7 +18,7 @@ export class TokenController {
   }
 
   @Delete('remove-token')
-  async removeToken(@Query('userId', MongoIdValidationPipe) userId: string) {
-    return this.tokenService.removeToken(userId);
+  async removeToken(@Query('userId', MongoIdValidationPipe) userId: string, @Query('token') fcmToken: string) {
+    return this.tokenService.removeToken(userId, fcmToken);
   }
 }

@@ -6,7 +6,6 @@ import { GetUser } from 'src/common/decorators';
 import { SendMessagePayloadDto } from './dto';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards';
-import { CreateTokenDto } from '../token/dto/create-token.dto';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
