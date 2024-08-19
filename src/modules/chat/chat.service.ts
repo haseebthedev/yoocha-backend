@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
-import { FilterQuery, PaginateModel, PaginateOptions } from 'mongoose';
+import { FilterQuery, PaginateModel, PaginateOptions, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { UserService } from '../user/user.service';
@@ -8,13 +8,20 @@ import { SendMessagePayloadDto } from './dto';
 import { ChatRoom, ChatMessage } from './schemas';
 import { EventsGateway } from '../events/events.gateway';
 import { Events } from '../events/enums';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from 'src/common/enums/notifications.enum';
+import { CreateTokenDto } from '../token/dto/create-token.dto';
+import { Token } from '../token/schemas/token.schema';
+import { TokenService } from '../token/token.service';
 
 @Injectable()
 export class ChatService {
   constructor(
+    @InjectModel(Token.name) private tokenModel: PaginateModel<Token>,
     @InjectModel(ChatRoom.name) private chatRoomModel: PaginateModel<ChatRoom>,
     @InjectModel(ChatMessage.name) private ChatMessageModel: PaginateModel<ChatMessage>,
     private userService: UserService,
+    private readonly notificationService: NotificationService,
 
     @Inject(forwardRef(() => EventsGateway))
     private readonly eventsGateway: EventsGateway,
@@ -32,7 +39,27 @@ export class ChatService {
     return !!existingRoom;
   }
 
+  async createNotification(initiatorId: string, tokens: Token[], message: string, type: NotificationType) {
+    for (const token of tokens) {
+      await this.notificationService.createNotification(
+        {
+          message,
+          type,
+          to: new Types.ObjectId(token.userId),
+          isRead: false,
+          sendPushNotification: true,
+          fcmToken: token.token,
+        },
+        initiatorId,
+      );
+    }
+  }
+
   async createRoom(initiatorId: string, inviteeId: string) {
+    const user = await this.userService.findById(initiatorId);
+    const senderName = `${user.firstname} ${user.lastname}`;
+    const tokens = await this.tokenModel.find({ userId: inviteeId });
+
     const existingRoom = await this.roomAlreadyExists(initiatorId, inviteeId);
 
     if (existingRoom) {
@@ -41,11 +68,23 @@ export class ChatService {
 
     // If no room exists, create a new one
     const newRoom = new this.chatRoomModel({ initiator: initiatorId, invitee: inviteeId });
-    return newRoom.save();
+    await newRoom.save();
+
+    if (tokens.length > 0) {
+      await this.createNotification(
+        initiatorId,
+        tokens,
+        `${senderName} sent you friend request.`,
+        NotificationType.FRIEND_REQUEST_RECIEVED,
+      );
+    }
+
+    return newRoom;
   }
 
   async joinRoom(roomId: string, inviteeId: string) {
     const room = await this.chatRoomModel.findById(roomId);
+    const tokens = await this.tokenModel.find({ userId: room.initiator });
 
     if (!room) throw new NotFoundException('Chatroom not found');
 
@@ -53,6 +92,16 @@ export class ChatService {
 
     room.status = ChatRoomState.ACTIVE;
     await room.save();
+
+    if (tokens.length > 0) {
+      await this.createNotification(
+        room.invitee,
+        tokens,
+        `Accepted your friend request.`,
+        NotificationType.FRIEND_REQUEST_ACCEPTED,
+      );
+    }
+
     return room;
   }
 
@@ -150,7 +199,11 @@ export class ChatService {
   }
 
   async sendMessage(roomId: string, senderId: string, payload: SendMessagePayloadDto) {
-    console.log('send message');
+    const room = await this.chatRoomModel.findById(roomId);
+    const to = room.initiator === senderId ? room.invitee : room.initiator;
+
+    const tokens = await this.tokenModel.find({ userId: to });
+
     const message = await this.ChatMessageModel.create({
       chatRoomId: roomId,
       sender: senderId,
@@ -159,13 +212,19 @@ export class ChatService {
       type: payload?.type || 'text',
     });
 
-    console.log('sendMessage....');
+    // console.log('sendMessage....');
 
     await message.save();
     await message.populate('sender');
 
+    // Check if it's the first message in the room create notification
+    const messageCount = await this.ChatMessageModel.countDocuments({ chatRoomId: roomId });
+    if (messageCount === 1 && tokens.length > 0) {
+      await this.createNotification(senderId, tokens, `Sent you a message.`, NotificationType.MESSAGE);
+    }
+
     // sending this event to server
-    console.log('roomId: ', roomId, 'message: ', message);
+    // console.log('roomId: ', roomId, 'message: ', message);
     this.eventsGateway.server.to(String(roomId)).emit(Events.RECEIVE_MESSAGE, { ...message });
     // this.eventsGateway.server.emit(Events.RECEIVE_MESSAGE, { ...message });
 

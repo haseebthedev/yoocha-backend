@@ -5,14 +5,18 @@ import { ChatMessage, ChatMessageSchema, ChatRoom, ChatRoomSchema } from './sche
 import { UserModule } from '../user/user.module';
 import { ChatController } from './chat.controller';
 import { EventsModule } from '../events/events.module';
+import { NotificationModule } from '../notification/notification.module';
+import { Token, TokenSchema } from '../token/schemas/token.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ChatRoom.name, schema: ChatRoomSchema },
       { name: ChatMessage.name, schema: ChatMessageSchema },
+      { name: Token.name, schema: TokenSchema },
     ]),
     UserModule,
+    NotificationModule,
     forwardRef(() => EventsModule),
   ],
   controllers: [ChatController],

@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ChangePassDTO, ContactUsDTO, UpdateProfileDTO } from './dto';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards';
 import { GetUser } from 'src/common/decorators';
 import { User } from './schemas/user.schema';
+import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user')
@@ -33,5 +34,10 @@ export class UserController {
   @Post('contact-us')
   async contactUs(@GetUser() user: User, @Body() dto: ContactUsDTO) {
     return await this.userService.contactUs(dto);
+  }
+
+  @Get('get-user')
+  async getUser(@Query('userId', MongoIdValidationPipe) userId: string) {
+    return await this.userService.getUser(userId);
   }
 }

@@ -127,4 +127,13 @@ export class UserService {
       throw new BadRequestException('Failed to send message. Please try again later.');
     }
   }
+
+  async getUser(userId: string) {
+    if (!userId) {
+      throw new BadRequestException('UserId is required.');
+    }
+
+    const user = await this.userModel.findById(userId);
+    return user;
+  }
 }

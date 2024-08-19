@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  DefaultValuePipe,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ParticipantType } from 'src/common/enums/user.enum';
 import { MongoIdValidationPipe } from 'src/common/pipes/mongo-id.pipe';
 import { UserService } from '../user/user.service';
@@ -26,7 +15,7 @@ export class ChatController {
     private userService: UserService,
   ) {}
 
-  @Get('send-friend-req')
+  @Post('send-friend-req')
   async sendFriendReq(
     @GetUser('id', MongoIdValidationPipe) initiatorId: string,
     @Query('inviteeId', MongoIdValidationPipe) inviteeId: string,
@@ -37,7 +26,7 @@ export class ChatController {
     }
   }
 
-  @Get('accept-friend-req')
+  @Post('accept-friend-req')
   async acceptFriendReq(
     @GetUser('id', MongoIdValidationPipe) inviteeId: string,
     @Query('roomId', MongoIdValidationPipe) roomId: string,
