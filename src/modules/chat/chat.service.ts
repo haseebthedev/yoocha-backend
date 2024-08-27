@@ -13,6 +13,7 @@ import { NotificationType } from 'src/common/enums/notifications.enum';
 import { CreateTokenDto } from '../token/dto/create-token.dto';
 import { Token } from '../token/schemas/token.schema';
 import { TokenService } from '../token/token.service';
+import { capitalize } from 'src/common/utils/formatString';
 
 @Injectable()
 export class ChatService {
@@ -57,7 +58,7 @@ export class ChatService {
 
   async createRoom(initiatorId: string, inviteeId: string) {
     const user = await this.userService.findById(initiatorId);
-    const senderName = `${user.firstname} ${user.lastname}`;
+    const senderName = `${capitalize(user.firstname)} ${capitalize(user.lastname)}`;
     const tokens = await this.tokenModel.find({ userId: inviteeId });
 
     const existingRoom = await this.roomAlreadyExists(initiatorId, inviteeId);
@@ -84,6 +85,8 @@ export class ChatService {
 
   async joinRoom(roomId: string, inviteeId: string) {
     const room = await this.chatRoomModel.findById(roomId);
+    const user = await this.userService.findById(room.initiator);
+    const senderName = `${capitalize(user.firstname)} ${capitalize(user.lastname)}`;
     const tokens = await this.tokenModel.find({ userId: room.initiator });
 
     if (!room) throw new NotFoundException('Chatroom not found');
@@ -97,7 +100,7 @@ export class ChatService {
       await this.createNotification(
         room.invitee,
         tokens,
-        `Accepted your friend request.`,
+        `${senderName} accepted your friend request.`,
         NotificationType.FRIEND_REQUEST_ACCEPTED,
       );
     }

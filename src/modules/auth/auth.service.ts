@@ -6,6 +6,11 @@ import { UserService } from '../user/user.service';
 import { ForgotPassDTO, ResetPassDTO, SignInDTO, SignUpDTO } from './dto';
 import * as bcrypt from 'bcrypt';
 import { JWTDecodedUserI } from 'src/interfaces';
+import { NotificationType } from 'src/common/enums/notifications.enum';
+import { TokenService } from '../token/token.service';
+import { NotificationService } from '../notification/notification.service';
+import { Types } from 'mongoose';
+import { AccountStatus } from 'src/common/enums/user.enum';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +18,8 @@ export class AuthService {
     private config: ConfigService,
     private jwt: JwtService,
     private userService: UserService,
+    private tokenService: TokenService,
+    private notificationService: NotificationService,
   ) {}
 
   async signToken(userId: string, email: string): Promise<{ access_token: string }> {
@@ -46,10 +53,36 @@ export class AuthService {
   async signin(dto: SignInDTO): Promise<{ user: User; token: string }> {
     const user = await this.userService.findByEmail(dto.email);
     const isMatch = await bcrypt.compare(dto.password, user.password);
+
     if (!isMatch) {
       throw new UnauthorizedException('Either email or password is invalid');
     }
+
+    if (user.accountStatus != AccountStatus.ACTIVE) {
+      throw new UnauthorizedException('Your account is not active!');
+    }
+
     const token = await this.signToken(user._id, user.email);
+
+    const fcmToken = await this.tokenService.saveToken({ userId: user._id.toString(), token: dto.fcmToken });
+
+    if (user.isFirstSignIn && fcmToken) {
+      await this.notificationService.createNotification(
+        {
+          fcmToken: dto.fcmToken,
+          type: NotificationType.ONBOARDING,
+          isRead: false,
+          sendPushNotification: true,
+          message: `Welcome to Yoocha. Discover the best way to use our app. Tap to start your journey!`,
+          to: new Types.ObjectId(user._id),
+        },
+        user._id,
+      );
+
+      await this.userService.findByIdandUpdate(user._id, { isFirstSignIn: false });
+      user.isFirstSignIn = false;
+    }
+
     return { user, token: token.access_token };
   }
 

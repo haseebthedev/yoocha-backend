@@ -21,7 +21,7 @@ export class UserController {
     return await this.userService.findByIdandUpdate(user._id, dto);
   }
 
-  @Delete('me')
+  @Patch('delete-account')
   async deleteAccount(@GetUser() user: User) {
     return await this.userService.findByIdAndDelete(user._id);
   }

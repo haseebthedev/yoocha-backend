@@ -1,4 +1,5 @@
-import { IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { AccountStatus } from 'src/common/enums/user.enum';
 
 export class ChangePassDTO {
   @IsString()
@@ -30,6 +31,14 @@ export class UpdateProfileDTO {
   @IsString()
   @IsOptional()
   country: string;
+
+  @IsEnum(AccountStatus)
+  @IsOptional()
+  accountStatus?: AccountStatus;
+
+  @IsOptional()
+  @IsBoolean()
+  isFirstSignIn?: boolean;
 }
 
 export class ContactUsDTO {
