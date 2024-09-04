@@ -46,7 +46,7 @@ export class NotificationService {
     } else if (type === NotificationType.ONBOARDING) {
       notificationTitle = 'Yoocha';
     } else {
-      notificationTitle = 'Message';
+      notificationTitle = 'New Message';
     }
 
     const message = {

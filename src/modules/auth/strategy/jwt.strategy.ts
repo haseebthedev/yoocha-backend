@@ -29,10 +29,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Your account is not active.');
     }
 
-    // if (user.accountStatus !== AccountStatus.ACTIVE) {
-    //   throw new UnauthorizedException('Your account is not active');
-    // }
-
     user.authCode = undefined;
     user.password = undefined;
 

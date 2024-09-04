@@ -73,7 +73,7 @@ export class AuthService {
           type: NotificationType.ONBOARDING,
           isRead: false,
           sendPushNotification: true,
-          message: `Welcome to Yoocha. Discover the best way to use our app. Tap to start your journey!`,
+          message: `Welcome to Yoocha. Discover the best way to use our app.`,
           to: new Types.ObjectId(user._id),
         },
         user._id,
