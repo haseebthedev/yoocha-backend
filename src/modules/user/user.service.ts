@@ -6,8 +6,8 @@ import { User } from './schemas/user.schema';
 import { ChangePassDTO, ContactUsDTO, UpdateProfileDTO } from './dto';
 import { SignUpDTO } from '../auth/dto';
 import * as bcrypt from 'bcrypt';
-import * as nodemailer from 'nodemailer';
-import { createMailtrapTransporter } from 'src/common/utils';
+import { createSMTPTransporter } from 'src/common/utils';
+import { AccountStatus } from 'src/common/enums/user.enum';
 
 @Injectable()
 export class UserService {
@@ -19,7 +19,7 @@ export class UserService {
       throw new ConflictException('User already exists with this email');
     }
 
-    const user = new this.userModel(dto);
+    const user = new this.userModel({ ...dto, accountStatus: AccountStatus.ACTIVE });
     return user.save();
   }
 
@@ -41,7 +41,8 @@ export class UserService {
     return user;
   }
 
-  async findByIdandUpdate(userId: string, dto: UpdateProfileDTO): Promise<User> {
+  async findByIdandUpdate(userId: string, dto: Partial<UpdateProfileDTO>): Promise<User> {
+    console.log('ok');
     const user = await this.userModel.findByIdAndUpdate(userId, dto, { new: true }).exec();
 
     if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
@@ -52,7 +53,10 @@ export class UserService {
   }
 
   async findByIdAndDelete(userId: string): Promise<{ result: string }> {
-    const user = await this.userModel.findByIdAndDelete(userId).exec();
+    const user = await this.userModel
+      .findByIdAndUpdate(userId, { accountStatus: AccountStatus.DELETED }, { new: true })
+      .exec();
+
     if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
 
     return {
@@ -111,18 +115,18 @@ export class UserService {
       throw new BadRequestException('All fields are required.');
     }
 
-    const transporter = createMailtrapTransporter();
+    const transporter = createSMTPTransporter();
 
     const mailOptions = {
       from: dto.email,
       to: process.env.CONTACT_EMAIL,
-      subject: 'Contact Us Form Submission',
+      subject: 'Yoocha Support Request: User Inquiry',
       text: `Name: ${dto.name}\nEmail: ${dto.email}\nMessage: ${dto.message}`,
     };
 
     try {
       await transporter.sendMail(mailOptions);
-      return { message: 'Message sent successfully!' };
+      return { message: 'Message sent successfully!!' };
     } catch (error) {
       throw new BadRequestException('Failed to send message. Please try again later.');
     }

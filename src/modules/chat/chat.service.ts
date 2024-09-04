@@ -13,6 +13,7 @@ import { NotificationType } from 'src/common/enums/notifications.enum';
 import { CreateTokenDto } from '../token/dto/create-token.dto';
 import { Token } from '../token/schemas/token.schema';
 import { TokenService } from '../token/token.service';
+import { capitalize } from 'src/common/utils/formatString';
 
 @Injectable()
 export class ChatService {
@@ -39,25 +40,28 @@ export class ChatService {
     return !!existingRoom;
   }
 
-  async createNotification(initiatorId: string, tokens: Token[], message: string, type: NotificationType) {
-    for (const token of tokens) {
-      await this.notificationService.createNotification(
-        {
-          message,
-          type,
-          to: new Types.ObjectId(token.userId),
-          isRead: false,
-          sendPushNotification: true,
-          fcmToken: token.token,
-        },
-        initiatorId,
-      );
-    }
+  async createPushNotification(initiatorId: string, tokens: Token[], message: string, type: NotificationType) {
+    await Promise.all(
+      tokens.map(
+        async (token) =>
+          await this.notificationService.createNotification(
+            {
+              message,
+              type,
+              to: new Types.ObjectId(token.userId),
+              isRead: false,
+              sendPushNotification: true,
+              fcmToken: token.token,
+            },
+            initiatorId,
+          ),
+      ),
+    );
   }
 
   async createRoom(initiatorId: string, inviteeId: string) {
     const user = await this.userService.findById(initiatorId);
-    const senderName = `${user.firstname} ${user.lastname}`;
+    const senderName = `${capitalize(user.firstname)} ${capitalize(user.lastname)}`;
     const tokens = await this.tokenModel.find({ userId: inviteeId });
 
     const existingRoom = await this.roomAlreadyExists(initiatorId, inviteeId);
@@ -71,11 +75,21 @@ export class ChatService {
     await newRoom.save();
 
     if (tokens.length > 0) {
-      await this.createNotification(
+      await this.createPushNotification(
         initiatorId,
         tokens,
         `${senderName} sent you friend request.`,
         NotificationType.FRIEND_REQUEST_RECIEVED,
+      );
+    } else {
+      await this.notificationService.createNotification(
+        {
+          message: `${senderName} sent you friend request.`,
+          type: NotificationType.FRIEND_REQUEST_RECIEVED,
+          to: new Types.ObjectId(inviteeId),
+          isRead: false,
+        },
+        initiatorId,
       );
     }
 
@@ -84,6 +98,8 @@ export class ChatService {
 
   async joinRoom(roomId: string, inviteeId: string) {
     const room = await this.chatRoomModel.findById(roomId);
+    const user = await this.userService.findById(room.initiator);
+    const senderName = `${capitalize(user.firstname)} ${capitalize(user.lastname)}`;
     const tokens = await this.tokenModel.find({ userId: room.initiator });
 
     if (!room) throw new NotFoundException('Chatroom not found');
@@ -94,11 +110,21 @@ export class ChatService {
     await room.save();
 
     if (tokens.length > 0) {
-      await this.createNotification(
+      await this.createPushNotification(
         room.invitee,
         tokens,
-        `Accepted your friend request.`,
+        `${senderName} accepted your friend request.`,
         NotificationType.FRIEND_REQUEST_ACCEPTED,
+      );
+    } else {
+      await this.notificationService.createNotification(
+        {
+          message: `${senderName} accepted your friend request.`,
+          type: NotificationType.FRIEND_REQUEST_ACCEPTED,
+          to: new Types.ObjectId(room.initiator),
+          isRead: false,
+        },
+        inviteeId,
       );
     }
 
@@ -220,7 +246,17 @@ export class ChatService {
     // Check if it's the first message in the room create notification
     const messageCount = await this.ChatMessageModel.countDocuments({ chatRoomId: roomId });
     if (messageCount === 1 && tokens.length > 0) {
-      await this.createNotification(senderId, tokens, `Sent you a message.`, NotificationType.MESSAGE);
+      await this.createPushNotification(senderId, tokens, `Sent you a message.`, NotificationType.MESSAGE);
+    } else {
+      await this.notificationService.createNotification(
+        {
+          message: `Sent you a message.`,
+          type: NotificationType.FRIEND_REQUEST_ACCEPTED,
+          to: new Types.ObjectId(to),
+          isRead: false,
+        },
+        senderId,
+      );
     }
 
     // sending this event to server

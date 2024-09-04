@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { AccountStatus } from 'src/common/enums/user.enum';
 
 export class SignInDTO {
   @IsEmail()
@@ -8,6 +9,10 @@ export class SignInDTO {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @IsString()
+  @IsOptional()
+  fcmToken: string;
 }
 
 export class SignUpDTO {
@@ -26,6 +31,10 @@ export class SignUpDTO {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @IsEnum(AccountStatus)
+  @IsOptional()
+  accountStatus?: AccountStatus;
 }
 
 export class ForgotPassDTO {

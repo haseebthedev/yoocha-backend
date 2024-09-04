@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateTokenDto } from './dto/create-token.dto';
@@ -23,8 +23,18 @@ export class TokenService {
   }
 
   async getToken(userId: string): Promise<{ docs: Token[] }> {
-    const tokens = await this.tokenModel.find({ userId: userId });
-    return { docs: tokens };
+    try {
+      const tokens = await this.tokenModel.find({ userId });
+
+      if (!tokens || tokens.length === 0) {
+        throw new NotFoundException(`No tokens found for userId: ${userId}`);
+      }
+
+      return { docs: tokens };
+    } catch (err) {
+      console.error('Error fetching tokens:', err);
+      return { docs: [] };
+    }
   }
 
   async removeToken(userId: string, fcmToken: string): Promise<{ result: string }> {

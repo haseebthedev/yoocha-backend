@@ -10,5 +10,6 @@ import { TokenSchema } from './schemas/token.schema';
   imports: [MongooseModule.forFeature([{ name: 'Token', schema: TokenSchema }])],
   providers: [TokenService],
   controllers: [TokenController],
+  exports: [TokenService],
 })
 export class TokenModule {}

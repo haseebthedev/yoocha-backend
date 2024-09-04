@@ -1,3 +1,3 @@
 export * from './common';
-export * from './mailtrap';
+export * from './nodeMailer';
 export * from './firebase';

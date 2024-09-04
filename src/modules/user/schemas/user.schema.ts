@@ -1,9 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { HydratedDocument } from 'mongoose';
 import { BaseSchema } from 'src/common/schemas';
 import * as Paginate from 'mongoose-paginate-v2';
 import * as bcrypt from 'bcrypt';
+import { AccountStatus } from 'src/common/enums/user.enum';
 
 @Schema()
 export class User extends BaseSchema {
@@ -45,6 +46,14 @@ export class User extends BaseSchema {
   @Prop({ default: null })
   @IsNotEmpty()
   country: string;
+
+  @Prop({ type: Boolean, default: true })
+  @IsBoolean()
+  isFirstSignIn: boolean;
+
+  @Prop({ type: String, enum: AccountStatus, required: true })
+  @IsEnum(AccountStatus)
+  accountStatus: AccountStatus;
 }
 
 export type UserDocument = HydratedDocument<User>;

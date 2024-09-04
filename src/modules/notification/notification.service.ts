@@ -17,16 +17,16 @@ export class NotificationService {
     private userService: UserService,
   ) {}
 
-  async determineScreen(notificationType: NotificationType): Promise<any> {
+  async determineScreen(notificationType: NotificationType): Promise<string> {
     switch (notificationType) {
       case NotificationType.ONBOARDING:
         return 'recieverequests';
       case NotificationType.MESSAGE:
-        return 'recieverequests';
+        return 'home';
       case NotificationType.FRIEND_REQUEST_RECIEVED:
         return 'recieverequests';
-      case NotificationType.FRIEND_REQUEST_RECIEVED:
-        return 'recieverequests';
+      case NotificationType.FRIEND_REQUEST_ACCEPTED:
+        return 'notifications';
       default:
         return 'notifications';
     }
@@ -35,15 +35,24 @@ export class NotificationService {
   async sendNotification(
     createdNotification: NotificationDTO,
     fcmToken: string,
-    title: string,
-    body: string,
+    type: NotificationType,
+    description: string,
   ): Promise<void> {
     const screen = await this.determineScreen(createdNotification.type);
+    let notificationTitle;
+
+    if (type === NotificationType.FRIEND_REQUEST_ACCEPTED || type === NotificationType.FRIEND_REQUEST_RECIEVED) {
+      notificationTitle = 'Friend Request';
+    } else if (type === NotificationType.ONBOARDING) {
+      notificationTitle = 'Yoocha';
+    } else {
+      notificationTitle = 'New Message';
+    }
 
     const message = {
       notification: {
-        title,
-        body,
+        title: notificationTitle,
+        body: description,
       },
       android: {
         notification: {
@@ -72,14 +81,17 @@ export class NotificationService {
       throw new BadRequestException('You are missing required fields!');
     }
     const createdNotification = new this.notificationModel({
-      ...dto,
       to: dto.to.toString(),
       from: userId.toString(),
       isRead: dto.isRead ?? false,
+      fcmToken: dto.fcmToken,
+      message: dto.message,
+      sendPushNotification: dto.sendPushNotification,
+      type: dto.type,
     });
 
     if (dto.sendPushNotification && dto.fcmToken) {
-      await this.sendNotification(createdNotification, dto.fcmToken, senderName, dto.message);
+      await this.sendNotification(createdNotification, dto.fcmToken, dto.type, dto.message);
     }
 
     return createdNotification.save();
