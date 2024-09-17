@@ -32,7 +32,7 @@ export class NotificationService {
     }
   }
 
-  async sendNotification(
+  async sendPushNotification(
     createdNotification: NotificationDTO,
     fcmToken: string,
     type: NotificationType,
@@ -67,7 +67,8 @@ export class NotificationService {
     };
 
     try {
-      await this.firebaseAdminService.getFirebaseApp().messaging().send(message);
+      const res = await this.firebaseAdminService.getFirebaseApp().messaging().send(message);
+      console.log(message);
     } catch (error) {
       throw new BadRequestException('Failed to send push notification');
     }
@@ -91,7 +92,8 @@ export class NotificationService {
     });
 
     if (dto.sendPushNotification && dto.fcmToken) {
-      await this.sendNotification(createdNotification, dto.fcmToken, dto.type, dto.message);
+      console.log('Sending Notification....');
+      await this.sendPushNotification(createdNotification, dto.fcmToken, dto.type, dto.message);
     }
 
     return createdNotification.save();
