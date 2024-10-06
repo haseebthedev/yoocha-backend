@@ -304,6 +304,7 @@ export class ChatService {
     return await this.userService.find(
       {
         _id: { $in: Array.from(suggestedFriendsIds), $nin: Array.from(friendsIds) },
+        accountStatus: 'ACTIVE',
       },
       paginateOptions,
     );
@@ -349,6 +350,7 @@ export class ChatService {
             { country: userInfo.country }, // Same country
           ],
         },
+        { accountStatus: 'ACTIVE' },
       ],
     };
 
