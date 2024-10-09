@@ -253,7 +253,7 @@ export class ChatService {
       await this.notificationService.createNotification(
         {
           message: `Sent you a message.`,
-          type: NotificationType.FRIEND_REQUEST_ACCEPTED,
+          type: NotificationType.MESSAGE,
           to: new Types.ObjectId(to),
           isRead: false,
         },
