@@ -8,6 +8,7 @@ import { FirebaseAdminService } from '../firebase/firebase-admin.service';
 import { UserService } from '../user/user.service';
 import { NotificationType } from 'src/common/enums/notifications.enum';
 import { capitalize } from 'src/common/utils/formatString';
+import { TokenService } from '../token/token.service';
 
 @Injectable()
 export class NotificationService {
@@ -15,6 +16,7 @@ export class NotificationService {
     @InjectModel(Notification.name) private notificationModel: PaginateModel<Notification>,
     private readonly firebaseAdminService: FirebaseAdminService,
     private userService: UserService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async determineScreen(notificationType: NotificationType): Promise<string> {
@@ -44,15 +46,15 @@ export class NotificationService {
     if (type === NotificationType.FRIEND_REQUEST_ACCEPTED || type === NotificationType.FRIEND_REQUEST_RECIEVED) {
       notificationTitle = 'Friend Request';
     } else if (type === NotificationType.ONBOARDING) {
-      notificationTitle = 'Yoocha';
+      notificationTitle = 'Welcome to Yoocha';
     } else {
       notificationTitle = 'New Message';
     }
 
     const message = {
       notification: {
-        title: notificationTitle,
-        body: description,
+        title: notificationTitle || 'Yoocha',
+        body: description || '',
       },
       android: {
         notification: {
@@ -67,10 +69,22 @@ export class NotificationService {
     };
 
     try {
-      const res = await this.firebaseAdminService.getFirebaseApp().messaging().send(message);
+      await this.firebaseAdminService.getFirebaseApp().messaging().send(message);
       console.log(message);
     } catch (error) {
-      throw new BadRequestException('Failed to send push notification');
+      // throw new BadRequestException('Failed to send push notification');
+
+      if (error.code === 'messaging/registration-token-not-registered') {
+        // Token is no longer valid, remove it from the database
+        try {
+          await this.tokenService.removeToken(createdNotification.to.toString(), fcmToken);
+          console.log(`Removed invalid FCM token: ${fcmToken} for userId: ${createdNotification.to}`);
+        } catch (removalError) {
+          console.error('Failed to remove invalid FCM token:', removalError);
+        }
+      } else {
+        throw new BadRequestException('Failed to send push notification');
+      }
     }
   }
 
@@ -92,7 +106,6 @@ export class NotificationService {
     });
 
     if (dto.sendPushNotification && dto.fcmToken) {
-      console.log('Sending Notification....');
       await this.sendPushNotification(createdNotification, dto.fcmToken, dto.type, dto.message);
     }
 
