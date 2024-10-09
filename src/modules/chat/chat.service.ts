@@ -74,6 +74,8 @@ export class ChatService {
     const newRoom = new this.chatRoomModel({ initiator: initiatorId, invitee: inviteeId });
     await newRoom.save();
 
+    console.log('tokens === ', tokens);
+
     if (tokens.length > 0) {
       await this.createPushNotification(
         initiatorId,
@@ -251,7 +253,7 @@ export class ChatService {
       await this.notificationService.createNotification(
         {
           message: `Sent you a message.`,
-          type: NotificationType.FRIEND_REQUEST_ACCEPTED,
+          type: NotificationType.MESSAGE,
           to: new Types.ObjectId(to),
           isRead: false,
         },
@@ -260,7 +262,6 @@ export class ChatService {
     }
 
     // sending this event to server
-    // console.log('roomId: ', roomId, 'message: ', message);
     this.eventsGateway.server.to(String(roomId)).emit(Events.RECEIVE_MESSAGE, { ...message });
     // this.eventsGateway.server.emit(Events.RECEIVE_MESSAGE, { ...message });
 

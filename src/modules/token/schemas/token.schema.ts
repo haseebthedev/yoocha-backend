@@ -13,9 +13,14 @@ export class Token extends BaseSchema {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
+
+  @Prop({ type: Date, default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }) // 30 days from now
+  expiresAt: Date;
 }
 
 export type TokenDocument = HydratedDocument<Token>;
 export const TokenSchema = SchemaFactory.createForClass(Token).set('versionKey', false);
 
 TokenSchema.plugin(Paginate);
+
+TokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

@@ -6,12 +6,14 @@ import { Notification, NotificationSchema } from './schemas/notification.schema'
 import { FirebaseModule } from '../firebase/firebase-admin.module';
 import { UserService } from '../user/user.service';
 import { UserModule } from '../user/user.module';
+import { TokenModule } from '../token/token.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Notification.name, schema: NotificationSchema }]),
     FirebaseModule,
     UserModule,
+    TokenModule,
   ],
   controllers: [NotificationController],
   providers: [NotificationService],
